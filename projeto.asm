@@ -18,7 +18,15 @@ TITLE "Projecto"
     LINE_BREAK          DB  0Dh, 0Ah, "$"
     
     ; Variaveis do algoritmo da divisao
-
+    DIV_INTRO_DIVIDENDO_MSG     DB  "Introduza o dividendo:$"
+    DIV_INTRO_DIVISOR_MSG       DB  "Introduza o divisor:$"
+    
+    ; Outras variaveis         
+    INPUT_A_STR         DB  5 DUP("$")
+    INPUT_A_LEN         DB  0
+    INPUT_A_VAL         DW  0
+    
+    INPUT_B_VAL         DB  0             
 .CODE
 
 ; Procedimento que inicializa o registos DS e ES
@@ -181,15 +189,98 @@ CHECK_KEY_IN_BUFFER PROC
 CHECK_KEY_IN_BUFFER ENDP
 
 DIVISION_ALG PROC
+    MOV INPUT_A_LEN, 00h
+    MOV [INPUT_A_STR], 30h
+    
+    LEA DX, DIV_INTRO_MSG
+    MOV AH, 09h
+    INT 21h
+    
+    LEA DX, LINE_BREAK
+    MOV AH, 09h
+    INT 21h
+    
+    MOV CX, 05h
+ DIV_INPUT_A:
+    MOV AH, 01h
+    INT 21h
+    
+    PUSH DIV_INPUT_A
+    
+    CMP AL, 0Dh
+    JE DIV_INPUT_A_END
+    CMP AL, 08h
+    JE DIV_BACKSPACE_INPUT
+    CMP AL, 30h
+    JL DIV_INVALID_INPUT
+    CMP AL, 39H
+    JG DIV_INVALID_INPUT
+    
+    POP DX
+    MOV BX, 05h
+    SUB BX, CX
+    SUB AL, 30h
+    MOV [INPUT_A_STR + BX], AL
+    INC INPUT_A_LEN
+    
+    LOOP DIV_INPUT_A
+    
+ DIV_INPUT_A_END:
+    
+ DIV_INPUT_B:
+ 
+ DIV_INVALID_INPUT:
+    INC CX
+    MOV AH, 02h
+    MOV AL, 08h
+    INT 21h
+       
+ DIV_BACKSPACE_INPUT:
+    MOV AH, 02h
+    MOV AL, 20h
+    INT 21h
+ 
+    MOV AL, 08h
+    INT 21h
+    
+    POP AX
+    JMP AX
     
     RET
 DIVISION_ALG ENDP
 
+SQRT_ALG PROC
+    
+    RET
+SQRT_ALG ENDP
+
+CONVERSION_ALG PROC
+    
+    RET
+CONVERSION_ALG ENDP
 _BEGIN:
     CALL INIT_SEGMENTS
-                   
+                       
     CALL CHOOSE_ALG
     
+    CMP CURRENT_ALG, 00h
+    JE RUN_DIVISION_ALG
+    CMP CURRENT_ALG, 01h
+    JE RUN_SQRT_ALG
+    CMP CURRENT_ALG, 02h
+    
+    CALL CONVERSION_ALG
+    JMP FINISH_BEGIN
+    
+ RUN_DIVISION_ALG:
+    CALL DIVISION_ALG
+    JMP FINISH_BEGIN
+    
+ RUN_SQRT_ALG:
+    CALL SQRT_ALG
+    JMP FINISH_BEGIN
+     
+ FINISH_BEGIN:
     MOV AH, 4Ch
     INT 21h
 END _BEGIN
