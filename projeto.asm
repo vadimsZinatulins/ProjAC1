@@ -11,6 +11,7 @@ TITLE "Projecto"
     DIVISION_INI_MSG    DB  "Algoritmo da divisao$"
     SQRT_INIT_MSG       DB  "Algorito da raiz quadrada$"
     CONVERSION_INIT_MSG DB  "Algoritmo da conversao$"
+    OVERFLOW_ERROR_MSG  DB  "Erro de overflow...$"
     
     CURRENT_ALG         DB  0
     
@@ -26,6 +27,8 @@ TITLE "Projecto"
     INPUT_A_LEN         DB  0
     INPUT_A_VAL         DW  0
     
+    INPUT_B_STR         DB  5 DUP("$")
+    INPUT_B_LEN         DB  0   
     INPUT_B_VAL         DB  0             
 .CODE
 
@@ -192,7 +195,7 @@ DIVISION_ALG PROC
     MOV INPUT_A_LEN, 00h
     MOV [INPUT_A_STR], 30h
     
-    LEA DX, DIV_INTRO_MSG
+    LEA DX, DIV_INTRO_DIVIDENDO_MSG
     MOV AH, 09h
     INT 21h
     
@@ -217,6 +220,7 @@ DIVISION_ALG PROC
     JG DIV_INVALID_INPUT
     
     POP DX
+    
     MOV BX, 05h
     SUB BX, CX
     SUB AL, 30h
@@ -226,9 +230,51 @@ DIVISION_ALG PROC
     LOOP DIV_INPUT_A
     
  DIV_INPUT_A_END:
+    POP DX
     
+    LEA DX, LINE_BREAK
+    MOV AH, 09h
+    INT 21h
+    
+    LEA DX, DIV_INTRO_DIVISOR_MSG
+    MOV AH, 09h
+    INT 21h
+    
+    LEA DX, LINE_BREAK
+    MOV AH, 09h
+    INT 21h
+    
+    MOV CX, 05h
  DIV_INPUT_B:
- 
+    MOV AH, 01h
+    INT 21h
+    
+    PUSH DIV_INPUT_B
+    
+    CMP AL, 0Dh
+    JE DIV_INPUT_B_END
+    CMP AL, 08h
+    JE DIV_BACKSPACE_INPUT
+    CMP AL, 30h
+    JL DIV_INVALID_INPUT
+    CMP AL, 39H
+    JG DIV_INVALID_INPUT
+    
+    POP DX
+    
+    MOV DX, 00h
+    MOV BX, 00h
+    MOV BL, AL
+    MOV AX, 0Ah
+    MUL INPUT_B_VAL
+    ADC DX, DX
+    CMP DX, 0
+    JNE OVERFLOW_ERROR
+    
+    LOOP DIV_INPUT_B
+    
+    JMP DIV_INPUT_B_END
+    
  DIV_INVALID_INPUT:
     INC CX
     MOV AH, 02h
@@ -245,6 +291,12 @@ DIVISION_ALG PROC
     
     POP AX
     JMP AX
+ DIV_INPUT_B_END:
+    POP DX
+    
+    LEA DX, LINE_BREAK
+    MOV AH, 09h
+    INT 21h
     
     RET
 DIVISION_ALG ENDP
@@ -279,7 +331,11 @@ _BEGIN:
  RUN_SQRT_ALG:
     CALL SQRT_ALG
     JMP FINISH_BEGIN
-     
+ OVERFLOW_ERROR:
+    LEA DX, OVERFLOW_ERROR_MSG
+    MOV AH, 09h
+    INT 21h    
+    
  FINISH_BEGIN:
     MOV AH, 4Ch
     INT 21h
