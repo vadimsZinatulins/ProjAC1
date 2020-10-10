@@ -8,6 +8,8 @@
     ; Division algorithm specific variables
     ask_input_a_msg     db  "Introduza o dividendo: $"
     ask_input_b_msg     db  "Introduza o divisor: $"
+    output_a_msg        db  "Resultado = $"
+    output_b_msg        db  "Resto = $"
     
     ; Global variables
     input_a_str         db  5 DUP("$")
@@ -303,6 +305,56 @@ GET_INPUT_FINALIZATION:
     
     ret
 Get_Input endp
+                  
+; Input:    di  ->  Buffer address
+;           ah  ->  Value to insert
+; Output: None
+; Shifts buffer to the right and insert bh at front
+Push_To_Front proc
+    mov cx, 04h
+
+PUSH_TO_FRONT_SHIFT:
+    mov bx, cx
+    mov al, [di + bx]
+    mov [di + bx + 1], al
+    loop PUSH_TO_FRONT_SHIFT
+    mov bx, cx
+    mov al, [di + bx]
+    mov [di + bx + 1], al
+    mov [di], ah
+    
+    ret
+Push_To_Front endp
+       
+; Input:    cx  -> Number to print
+; Ouput: None
+; Prints the hexadecimal value to screen as ascii 
+Print_Num proc 
+    mov [input_b_str], "$"
+    lea di, input_b_str
+    
+PRINT_NUM_START:
+    mov ax, cx
+    mov bx, 0ah
+    mov dx, 00h
+    div bx
+    mov cx, ax
+    add dx, 30h
+     
+    push cx 
+    mov ah, dl   
+    call Push_To_Front
+    pop cx
+       
+    cmp cx, 00h
+    jg PRINT_NUM_START
+               
+    lea dx, input_b_str
+    mov ah, 09h       
+    int 21h
+    
+    ret
+Print_Num endp   
 
 Run_Division_Alg proc
     ; Ask for input A
@@ -330,13 +382,80 @@ Run_Division_Alg proc
     lea ax, input_b_val
     push ax
     call Get_Input
-    
+                      
+    mov aux_var_a, 00h      ; Remainder
+    mov aux_var_b, 00h      ; Result
     mov di, 00h
 RUN_DIVISION_ALG_CALC_REMAINDER:
+    mov ax, 00h
+    mov al, input_a_len
+    cmp di, ax
+    jge RUN_DIVISION_ALG_FINISHED
     
+    mov ax, 0ah
+    
+    mov bx, 00h
+    mov bl, [input_a_str + di]
+    sub bx, 30h
     inc di
-    cmp di, 04h
-    jle RUN_DIVISION_ALG_CALC_REMAINDER 
+    
+    mov dx, 00h
+    
+    mul aux_var_a
+    add ax, bx
+    mov aux_var_a, ax
+    
+    cmp ax, input_b_val
+    jl RUN_DIVISION_ALG_CALC_REMAINDER
+    
+    mov cx, 00h
+RUN_DIVISION_ALG_CALC_NEW_DIGIT:
+    mov ax, cx
+    mul input_b_val
+    
+    cmp ax, aux_var_a
+    jg RUN_DIVISION_ALG_CALC_DIGIT_FOUND:
+    
+    inc cx
+    cmp cx, 09h
+    jl RUN_DIVISION_ALG_CALC_NEW_DIGIT
+
+RUN_DIVISION_ALG_CALC_DIGIT_FOUND:
+    dec cx
+    mov ax, cx
+    mul input_b_val
+    
+    sub aux_var_a, ax
+    
+    mov ax, 0ah
+    mul aux_var_b
+    add ax, cx
+    mov aux_var_b, ax
+                      
+    mov ax, 00h
+    mov al, input_a_len
+    cmp di, ax
+    jl RUN_DIVISION_ALG_CALC_REMAINDER
+     
+RUN_DIVISION_ALG_FINISHED:
+    call Write_Line_Break
+    
+    ; Print the result
+    lea dx, output_a_msg
+    mov ah, 09h
+    int 21h
+    
+    mov cx, aux_var_b  
+    call Print_Num  
+    
+    call Write_Line_Break
+    
+    ; Print the remainder
+    lea dx, output_b_msg
+    mov ah, 09h
+    int 21h
+    mov cx, aux_var_a
+    call Print_Num 
     
     ret
 Run_Division_Alg endp
