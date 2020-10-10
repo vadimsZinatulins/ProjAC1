@@ -4,14 +4,24 @@
 
 .stack 100h
 
-.data    
-    ; Outras variaveis         
+.data
+    ; Division algorithm specific variables
+    ask_input_a_msg     db  "Introduza o dividendo: $"
+    ask_input_b_msg     db  "Introduza o divisor: $"
+    
+    ; Global variables
     input_a_str         db  5 DUP("$")
-    input_a_len         db  0xffh
-    input_a_val         dw  0xffffh
+    input_a_len         db  0x0h
+    input_a_val         dw  0x0h
     
-    some_msg            db  "Hello World!$"
+    input_b_str         db  5 DUP("$")
+    input_b_len         db  00h
+    input_b_val         dw  00h
+                               
+    aux_var_a           dw  00h
+    aux_var_b           dw  00h
     
+    line_break          db  0ah, 0dh, "$"
 .code
 
 ; Input: None
@@ -62,6 +72,17 @@ Write_Space_And_Backspace proc
     
     ret
 Write_Space_And_Backspace endp
+
+; Input: None
+; Output: None
+; Writes a line break to the screen
+Write_Line_Break proc
+    lea dx, line_break
+    mov ah, 09h
+    int 21h
+    
+    ret
+Write_Line_Break endp
 
 ; Input:    [SP + 6] -> Address of input string
 ;           [SP + 4] -> Address of input length
@@ -283,24 +304,46 @@ GET_INPUT_FINALIZATION:
     ret
 Get_Input endp
 
+Run_Division_Alg proc
+    ; Ask for input A
+    lea dx, ask_input_a_msg
+    mov ah, 09h
+    int 21h
+    lea ax, input_a_str
+    push ax
+    lea ax, input_a_len
+    push ax
+    lea ax, input_a_val
+    push ax
+    call Get_Input
+    
+    call Write_Line_Break
+    
+    ; Ask for input B
+    lea dx, ask_input_b_msg
+    mov ah, 09h
+    int 21h
+    lea ax, input_b_str
+    push ax
+    lea ax, input_b_len
+    push ax
+    lea ax, input_b_val
+    push ax
+    call Get_Input
+    
+    mov di, 00h
+RUN_DIVISION_ALG_CALC_REMAINDER:
+    
+    inc di
+    cmp di, 04h
+    jle RUN_DIVISION_ALG_CALC_REMAINDER 
+    
+    ret
+Run_Division_Alg endp
 _begin:        
     call Init_Segments
     
-    lea ax, input_a_str
-    push ax
-    
-    lea ax, input_a_len
-    push ax
-    
-    lea ax, input_a_val
-    push ax
-    
-    lea dx, some_msg
-    mov ah, 09h
-    int 21h 
-    
-    call Get_Input
-     
+    call Run_Division_Alg 
     mov ah, 4ch
     int 21h
 end _begin
