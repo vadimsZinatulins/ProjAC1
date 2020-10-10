@@ -24,6 +24,8 @@
     aux_var_b           dw  00h
     
     line_break          db  0ah, 0dh, "$"
+    
+    introduction_msg    db  0ah, 0dh, "Escolha um algoritmo", 0ah, 0dh, "1) Divisao", 0ah, 0dh, "2) Raiz Quadrada", 0ah, 0dh, "3) Conversao", 0ah, 0dh, 0ah, 0dh, "q para sair", 0ah, 0dh, "$"
 .code
 
 ; Input: None
@@ -503,6 +505,10 @@ _begin:
     call Init_Segments
     
 MAIN_LOOP:
+    lea dx, introduction_msg
+    mov ah, 09h
+    int 21h
+    
     mov ah, 01h
     int 21h
     
