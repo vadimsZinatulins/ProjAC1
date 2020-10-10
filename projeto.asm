@@ -105,7 +105,7 @@ Get_Input proc
     
     ; Clear [SP - 6] (string input)
     mov ax, 00h
-    mov al, "$"
+    mov al, "0"
     add sp, 0ah
     pop di
     sub sp, 0ch
@@ -114,8 +114,7 @@ GET_INPUT_CLEAR_STRING_INPUT:
     mov bx, cx
     mov [di + bx], al
     loop GET_INPUT_CLEAR_STRING_INPUT
-    mov bx, cx
-    mov [di + bx], "$" 
+    mov [di], "0" 
                                           
     ; Clear [SP - 4] (length of the input)
     mov ax, 00h
@@ -293,6 +292,12 @@ GET_INPUT_OVERFLOW_ERROR:
     
     jmp Get_Input
 GET_INPUT_FINALIZATION:
+    add sp, 08h
+    pop di
+    sub sp, 0ah
+    cmp [di], 00h
+    je GET_INPUT_OVERFLOW_ERROR
+    
     pop ax  ; Remove cursor page from stack
     pop ax  ; Remove cursor row and column from stack
     pop ax  ; Remove return address from stack
@@ -382,6 +387,9 @@ Run_Division_Alg proc
     lea ax, input_b_val
     push ax
     call Get_Input
+    
+    cmp input_b_val, 00h
+    je RUN_DIVISION_ALG_INF
                       
     mov aux_var_a, 00h      ; Remainder
     mov aux_var_b, 00h      ; Result
@@ -445,7 +453,7 @@ RUN_DIVISION_ALG_FINISHED:
     mov ah, 09h
     int 21h
     
-    mov cx, aux_var_b  
+    lea di, input_b_str  
     call Print_Num  
     
     call Write_Line_Break
@@ -454,8 +462,40 @@ RUN_DIVISION_ALG_FINISHED:
     lea dx, output_b_msg
     mov ah, 09h
     int 21h
-    mov cx, aux_var_a
-    call Print_Num 
+    
+    lea di, input_b_str  
+    call Print_Num
+    
+    jmp RUN_DIVISION_ALG_TERMINATE
+      
+RUN_DIVISION_ALG_INF:
+    mov [input_b_str + 0], "I"
+    mov [input_b_str + 1], "N"
+    mov [input_b_str + 2], "F"
+    mov [input_b_str + 3], "$"
+    
+    call Write_Line_Break
+    
+    ; Print the result
+    lea dx, output_a_msg
+    mov ah, 09h
+    int 21h
+    
+    lea dx, input_b_str
+    mov ah, 09h
+    int 21h
+    
+    call Write_Line_Break
+    
+    ; Print the remainder
+    lea dx, output_b_msg
+    mov ah, 09h
+    int 21h
+    
+    lea dx, input_b_str
+    mov ah, 09h
+    int 21h
+RUN_DIVISION_ALG_TERMINATE:
     
     ret
 Run_Division_Alg endp
