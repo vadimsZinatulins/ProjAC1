@@ -7,8 +7,8 @@
 .data    
     ; Outras variaveis         
     input_a_str         db  5 DUP("$")
-    input_a_len         db  5
-    input_a_val         dw  5
+    input_a_len         db  0xffh
+    input_a_val         dw  0xffffh
     
     some_msg            db  "Hello World!$"
     
@@ -37,7 +37,7 @@ Validate_Cursor_State proc
     mov ah, 02h
     int 10h
     
- VALIDATE_CURSOR_STATE_END:   
+VALIDATE_CURSOR_STATE_END:   
     ret
 Validate_Cursor_State endp
 
@@ -81,38 +81,147 @@ Get_Input proc
     push bx     ; Store cursor current page aswell (this is needed to restore the current cursor state)
     
     ; Clear [SP - 6] (string input)
-    add sp, 08h
+    mov ax, 00h
+    mov al, "$"
+    add sp, 0ah
     pop di
-    sub sp, 0ah
+    sub sp, 0ch
     mov cx, 04h    
- GET_INPUT_CLEAR_STRING_INPUT:
+GET_INPUT_CLEAR_STRING_INPUT:
     mov bx, cx
-    mov [di + bx], "$"
+    mov [di + bx], al
     loop GET_INPUT_CLEAR_STRING_INPUT
     mov bx, cx
     mov [di + bx], "$" 
                                           
     ; Clear [SP - 4] (length of the input)
+    mov ax, 00h
+    add sp, 08h
+    pop di
+    sub sp, 0ah
+    mov [di], al 
+    
+    ; Clear [SP - 2] (input's hexadecimal value)
+    mov ax, 00h
     add sp, 06h
     pop di
     sub sp, 08h
-    mov [di], 0 
-    
-    ; Clear [SP - 2] (input's hexadecimal value)
-    add sp, 04h
-    pop di
-    sub sp, 06h
-    mov [di], 0
+    mov [di], ax
     
     mov cx, 06h
-    jmp GET_INPUT_PROPT_USER
- GET_INPUT_INVALID_NUMBER:
-    call Write_Backspace
+        
+GET_INPUT_PROPT_USER:
+    mov ah, 01h
+    int 21h
     
- GET_INPUT_BACKSPACE_PRESSED:
+    mov bx, 06h
+    sub bx, cx
+    
+    cmp al, 0dh ; Compare user input with ENTER
+    je GET_INPUT_FINALIZATION
+    cmp al, 08h ; Compare user input with BACKSPACE
+    je GET_INPUT_BACKSPACE_PRESSED
+    cmp bx, 05h ; If di is 1 it means that all 5 bytes are full, user can only input ENTER or BACKSPACE
+    jge GET_INPUT_INVALID_NUMBER
+    cmp al, 30h ; If user input is less than 30h then it is invalid number
+    jl GET_INPUT_INVALID_NUMBER
+    cmp al, 39h ; If user input is less than 39h then it is invalid number
+    jg GET_INPUT_INVALID_NUMBER
+ 
+    ; Update [SP - 6](String input)   
+    add sp, 0ah
+    pop di
+    sub sp, 0ch 
+    mov [di + bx], al
+    
+    ; Update [SP - 4](length of the input)
+    add sp, 08h
+    pop di
+    sub sp, 0ah
+    inc [di]
+    
+    ; Update [SP - 2] (input's hexadecimal value)
+    add sp, 06h
+    pop di
+    sub sp, 08h
+    mov bx, [di]
+    
+    push cx         ; Store current loop state
+    mov cx, 00h
+    mov cl, al      ; Save user input into cl
+    sub cx, 30h     ; Convert ascii input to machine numeric value
+    
+    mov dx, 00h
+    mov ax, 0ah
+    mul bx
+    
+    ; Check for overflow error (after multiplication)
+    adc dx, dx
+    cmp dx, 00h
+    jne GET_INPUT_OVERFLOW_ERROR
+    
+    add ax, cx
+    
+    ; Check for overflow error (after adition)
+    adc dx, dx
+    cmp dx, 00h
+    jne GET_INPUT_OVERFLOW_ERROR 
+    
+    mov [di], ax
+    
+    pop cx          ; Restore current loop state
+    
+    loop GET_INPUT_PROPT_USER
+    
+GET_INPUT_INVALID_NUMBER:
+    call Write_Backspace
+    call Write_Space_And_Backspace
+    
+    jmp GET_INPUT_PROPT_USER
+    
+GET_INPUT_BACKSPACE_PRESSED:
+    inc cx
+    
+    ; Update [SP - 2] (input's hexadecimal value), divide it by 10
+    add sp, 06h
+    pop di
+    sub sp, 08h
+    mov ax, [di]
+    mov bx, 0ah
+    mov dx, 00h
+    div bx
+    mov [di], ax
+    
+    ; Update [SP - 4](length of the input), it needs to be decremented since one character was removed by user
+    add sp, 08h
+    pop di
+    sub sp, 0ah
+    dec [di]
+    
+    ; Make sure cx is never bigger than 6
+    cmp cx, 06h
+    jle GET_INPUT_CX_FIXED
+    mov cx, 06h
+    
+    ; Update [SP - 4](length of the input) so it is never less than 0
+    mov [di], 00h
+    
+    ; Update [SP - 2] (input's hexadecimal value) set it to 0
+    add sp, 06h
+    pop di
+    sub sp, 08h
+    mov ax, 00h
+    mov [di], ax                         
+GET_INPUT_CX_FIXED:    
+    ; Save curret loop state
+    push cx
+    
     ; Get cursos current state
     mov ah, 03h
     int 10h
+    
+    ; Restore loop state
+    pop cx
     
     ; Move cursor row and column to ax
     mov ax, dx
@@ -127,29 +236,13 @@ Get_Input proc
 
     call Validate_Cursor_State
        
-    call Write_Space_And_Backspace
+    call Write_Space_And_Backspace    
     
- GET_INPUT_PROPT_USER:
-    mov ah, 01h
-    int 21h
-    
-    mov di, 06h
-    sub di, cx
-    
-    cmp al, 0dh ; Compare user input with ENTER
-    je GET_INPUT_FINALIZATION
-    cmp al, 08h ; Compare user input with BACKSPACE
-    je GET_INPUT_BACKSPACE_PRESSED
-    cmp di, 05h ; If di is 1 it means that all 5 bytes are full, user can only input ENTER or BACKSPACE
-    je GET_INPUT_INVALID_NUMBER
-    cmp al, 30h ; If user input is less than 30h then it is invalid number
-    jl GET_INPUT_INVALID_NUMBER
-    cmp al, 39h ; If user input is less than 39h then it is invalid number
-    jg GET_INPUT_INVALID_NUMBER
-    
-    loop GET_INPUT_PROPT_USER
+    jmp GET_INPUT_PROPT_USER
 
- GET_INPUT_FINALIZATION:
+GET_INPUT_OVERFLOW_ERROR:
+
+GET_INPUT_FINALIZATION:
     pop ax  ; Remove cursor page from stack
     pop ax  ; Remove cursor row and column from stack
     pop ax  ; Remove return address from stack
@@ -164,6 +257,10 @@ Get_Input proc
 Get_Input endp
 
 _begin:
+    mov ax, 019h
+    mov bx, 0ah
+    div bx
+    
     call Init_Segments
 
     lea ax, input_a_str
