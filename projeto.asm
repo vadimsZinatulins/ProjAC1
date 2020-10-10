@@ -453,7 +453,7 @@ RUN_DIVISION_ALG_FINISHED:
     mov ah, 09h
     int 21h
     
-    lea di, input_b_str  
+    mov cx, aux_var_b  
     call Print_Num  
     
     call Write_Line_Break
@@ -463,7 +463,7 @@ RUN_DIVISION_ALG_FINISHED:
     mov ah, 09h
     int 21h
     
-    lea di, input_b_str  
+    mov cx, aux_var_a
     call Print_Num
     
     jmp RUN_DIVISION_ALG_TERMINATE
@@ -502,7 +502,27 @@ Run_Division_Alg endp
 _begin:        
     call Init_Segments
     
-    call Run_Division_Alg 
+MAIN_LOOP:
+    mov ah, 01h
+    int 21h
+    
+    cmp al, 051h
+    je QUIT_MAIN_LOOP
+    cmp al, 071h
+    je QUIT_MAIN_LOOP
+    cmp al, 031h 
+    je MAIN_RUN_DIVISION_ALG
+    
+    jmp MAIN_LOOP
+    
+MAIN_RUN_DIVISION_ALG:
+    call Write_Line_Break
+    call Run_Division_Alg
+    call Write_Line_Break
+    
+    jmp MAIN_LOOP
+
+QUIT_MAIN_LOOP: 
     mov ah, 4ch
     int 21h
 end _begin
