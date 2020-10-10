@@ -157,19 +157,17 @@ GET_INPUT_PROPT_USER:
     
     ; Check for overflow error (after multiplication)
     adc dx, dx
-    cmp dx, 00h
-    jne GET_INPUT_OVERFLOW_ERROR
     
     add ax, cx
+    
+    pop cx          ; Restore current loop state
     
     ; Check for overflow error (after adition)
     adc dx, dx
     cmp dx, 00h
     jne GET_INPUT_OVERFLOW_ERROR 
     
-    mov [di], ax
-    
-    pop cx          ; Restore current loop state
+    mov [di], ax  
     
     loop GET_INPUT_PROPT_USER
     
@@ -241,7 +239,36 @@ GET_INPUT_CX_FIXED:
     jmp GET_INPUT_PROPT_USER
 
 GET_INPUT_OVERFLOW_ERROR:
-
+    pop bx
+    pop dx
+    
+    push dx
+    push bx
+    
+    mov ah, 02h
+    int 10h
+    
+    add sp, 0ah
+    pop di
+    sub sp, 0ch
+    mov [di + 0], " "
+    mov [di + 1], " "
+    mov [di + 2], " "
+    mov [di + 3], " "
+    mov [di + 4], " "
+    mov [di + 5], "$"
+    
+    mov dx, di
+    mov ah, 09h
+    int 21h
+    
+    pop bx
+    pop dx
+    
+    mov ah, 02h
+    int 10h
+    
+    jmp Get_Input
 GET_INPUT_FINALIZATION:
     pop ax  ; Remove cursor page from stack
     pop ax  ; Remove cursor row and column from stack
@@ -256,13 +283,9 @@ GET_INPUT_FINALIZATION:
     ret
 Get_Input endp
 
-_begin:
-    mov ax, 019h
-    mov bx, 0ah
-    div bx
-    
+_begin:        
     call Init_Segments
-
+    
     lea ax, input_a_str
     push ax
     
