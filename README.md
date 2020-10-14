@@ -55,6 +55,8 @@ Writes a line break to the screen (i.e. advances cursor to the next line)
 
 ## Get_Input procedure
 #### Inputs
+- Stack [SP + 8]: Flag used to indicate if overflow validation should be done or not (1 do validation, 0 skip validation)
+- Stack [SP + 7]: Maximum number of digits to read from user
 - Stack [SP + 6]: Address of the inputs string, input string will be stored in this address
 - Stack [SP + 4]: Address of the input length, input length will be stored in this address
 - Stack [SP + 2]: Address of the input value, input value will be stored in this address
