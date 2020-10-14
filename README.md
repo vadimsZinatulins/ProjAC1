@@ -21,9 +21,9 @@ Initializes  DS and ES (i.e. makes them reference .data segment)
 
 ## Validate_Cursor_State procedure
 #### Inputs
--AX: Cursor current state (Row and Column)
--DX: Cursor old state (Row and Column)
--BL: Cursor old page
+- AX: Cursor current state (Row and Column)
+- DX: Cursor old state (Row and Column)
+- BL: Cursor old page
 #### Outputs
 None
 #### Description
