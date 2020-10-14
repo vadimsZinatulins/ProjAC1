@@ -125,7 +125,11 @@ Get_Input proc
     add sp, 0ah
     pop di
     sub sp, 0ch
-    mov cx, 04h    
+    add sp, 0ch
+    pop cx
+    sub sp, 0eh
+    mov ch, 00h
+    dec cx    
 GET_INPUT_CLEAR_STRING_INPUT:
     mov bx, cx
     mov [di + bx], al
@@ -162,6 +166,7 @@ GET_INPUT_PROPT_USER:
     pop bx
     sub sp, 0eh
     mov bh, 00h
+    mov dx, bx
     inc bx
     sub bx, cx
     
@@ -169,7 +174,7 @@ GET_INPUT_PROPT_USER:
     je GET_INPUT_FINALIZATION
     cmp al, 08h ; Compare user input with BACKSPACE
     je GET_INPUT_BACKSPACE_PRESSED
-    cmp bx, 05h ; If di is 1 it means that all 5 bytes are full, user can only input ENTER or BACKSPACE
+    cmp bx, dx ; If di is 1 it means that all 5 bytes are full, user can only input ENTER or BACKSPACE
     jge GET_INPUT_INVALID_NUMBER
     cmp al, 30h ; If user input is less than 30h then it is invalid number
     jl GET_INPUT_INVALID_NUMBER
@@ -210,6 +215,8 @@ GET_INPUT_PROPT_USER:
     
     pop cx          ; Restore current loop state
     
+    adc dx, dx
+    
     ; Check if overflow validation is needed ([SP + 8])  
     add sp, 0ch
     pop bx
@@ -218,7 +225,6 @@ GET_INPUT_PROPT_USER:
     je GET_INPUT_SKIP_OVERFLOW_VALIDATION
     
     ; Check for overflow error (after adition)
-    adc dx, dx
     cmp dx, 00h
     jne GET_INPUT_OVERFLOW_ERROR 
 
@@ -548,7 +554,8 @@ Run_Sqrt_Alg proc
     mov ah, 09h
     int 21h
     mov ah, 00h         ; Don't check of overflow
-    mov al, 09h         ; Read at max. 9 digits
+    mov al, 09h         ; Read at max. 5 digits
+    push ax
     lea ax, sqrt_input_str
     push ax
     lea ax, sqrt_input_len
