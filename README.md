@@ -76,7 +76,8 @@ Shifts buffer (referenced by DI) to the right and inserts BH at the beginning
 
 ## Print_Num procedure
 #### Inputs
-- CX
+- CX: Number to print
+- DI: Reference to the buffer where ASCII value will be written
 #### Outputs
 None
 #### Description
