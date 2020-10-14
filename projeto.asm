@@ -6,10 +6,15 @@
 
 .data
     ; Division algorithm specific variables
-    ask_input_a_msg     db  "Introduza o dividendo: $"
-    ask_input_b_msg     db  "Introduza o divisor: $"
-    output_a_msg        db  "Resultado = $"
-    output_b_msg        db  "Resto = $"
+    div_ask_input_a_msg     db  "Introduza o dividendo: $"
+    div_ask_input_b_msg     db  "Introduza o divisor: $"
+    div_output_a_msg        db  "Resultado = $"
+    div_output_b_msg        db  "Resto = $"
+         
+    ; SQRT algorithm specific variables
+    sqrt_ask_input_msg      db  "Introduza o numero: $"
+    sqrt_output_msg         db  "Resultado = $"
+    
     
     ; Global variables
     input_a_str         db  5 DUP("$")
@@ -365,7 +370,7 @@ Print_Num endp
 
 Run_Division_Alg proc
     ; Ask for input A
-    lea dx, ask_input_a_msg
+    lea dx, div_ask_input_a_msg
     mov ah, 09h
     int 21h
     lea ax, input_a_str
@@ -379,7 +384,7 @@ Run_Division_Alg proc
     call Write_Line_Break
     
     ; Ask for input B
-    lea dx, ask_input_b_msg
+    lea dx, div_ask_input_b_msg
     mov ah, 09h
     int 21h
     lea ax, input_b_str
@@ -451,7 +456,7 @@ RUN_DIVISION_ALG_FINISHED:
     call Write_Line_Break
     
     ; Print the result
-    lea dx, output_a_msg
+    lea dx, div_output_a_msg
     mov ah, 09h
     int 21h
     
@@ -461,7 +466,7 @@ RUN_DIVISION_ALG_FINISHED:
     call Write_Line_Break
     
     ; Print the remainder
-    lea dx, output_b_msg
+    lea dx, div_output_b_msg
     mov ah, 09h
     int 21h
     
@@ -479,7 +484,7 @@ RUN_DIVISION_ALG_INF:
     call Write_Line_Break
     
     ; Print the result
-    lea dx, output_a_msg
+    lea dx, div_output_a_msg
     mov ah, 09h
     int 21h
     
@@ -490,7 +495,7 @@ RUN_DIVISION_ALG_INF:
     call Write_Line_Break
     
     ; Print the remainder
-    lea dx, output_b_msg
+    lea dx, div_output_b_msg
     mov ah, 09h
     int 21h
     
@@ -501,6 +506,29 @@ RUN_DIVISION_ALG_TERMINATE:
     
     ret
 Run_Division_Alg endp
+
+Run_Sqrt_Alg proc 
+    ; Ask for input A
+    lea dx, sqrt_ask_input_msg
+    mov ah, 09h
+    int 21h
+    lea ax, input_a_str
+    push ax
+    lea ax, input_a_len
+    push ax
+    lea ax, input_a_val
+    push ax
+    call Get_Input
+    
+    
+    
+    ret
+Run_Sqrt_Alg endp
+
+Run_Conversion_Alg proc
+    ret
+Run_Conversion_Alg endp
+
 _begin:        
     call Init_Segments
     
@@ -518,12 +546,29 @@ MAIN_LOOP:
     je QUIT_MAIN_LOOP
     cmp al, 031h 
     je MAIN_RUN_DIVISION_ALG
-    
+    cmp al, 032h 
+    je MAIN_RUN_SQRT_ALG
+    cmp al, 33h
+    je MAIN_RUN_CONVERSION_ALG
     jmp MAIN_LOOP
     
 MAIN_RUN_DIVISION_ALG:
     call Write_Line_Break
     call Run_Division_Alg
+    call Write_Line_Break
+    
+    jmp MAIN_LOOP
+
+MAIN_RUN_SQRT_ALG:
+    call Write_Line_Break
+    call Run_Sqrt_Alg
+    call Write_Line_Break
+    
+    jmp MAIN_LOOP
+    
+MAIN_RUN_CONVERSION_ALG:
+    call Write_Line_Break
+    call Run_Conversion_Alg
     call Write_Line_Break
     
     jmp MAIN_LOOP
