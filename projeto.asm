@@ -60,6 +60,9 @@ VALIDATE_CURSOR_STATE_END:
     ret
 Validate_Cursor_State endp
 
+; Input: None
+; Output: None
+; Writes a BACKSPACE character to the screen
 Write_Backspace proc
     mov ah, 02h ; Setup interrupt subroutine call to write a character    
     mov dl, 08h ; Select BACKSPACE character to write
@@ -70,7 +73,7 @@ Write_Backspace endp
 
 ; Input: None
 ; Output: None
-; Write SPACE character and then BACKSPACE character to the screen
+; Writes SPACE character followed by BACKSPACE character to the screen
 Write_Space_And_Backspace proc
     mov ah, 02h ; Setup interrupt subroutine call to write a character
     mov dl, 20h ; Select SPACE character to write
@@ -84,7 +87,7 @@ Write_Space_And_Backspace endp
 
 ; Input: None
 ; Output: None
-; Writes a line break to the screen
+; Writes a line break to the screen (i.e. advances cursor to the next line)
 Write_Line_Break proc
     lea dx, line_break
     mov ah, 09h
@@ -93,12 +96,12 @@ Write_Line_Break proc
     ret
 Write_Line_Break endp
 
-; Input:    [SP + 6] -> Address of input string
-;           [SP + 4] -> Address of input length
-;           [SP + 2] -> Address of input value
+; Input:    Stack [SP + 6] -> Address of the inputs string, input string will be stored in this address
+;           Stack [SP + 4] -> Address of the input length, input length will be stored in this address
+;           Stack [SP + 2] -> Address of the input value, input value will be stored in this address
 ; Output: None
-; Reads input from the user and stores it's string (decimal value in ASII) in argument [SP + 6], input size
-; in [SP + 4] and hexadecimal value in [SP + 2]. 
+; Reads input from the user and stores it's string (ASCII value) in argument Stack [SP + 6] address, input size 
+; in Stack [SP + 4] address and hexadecimal value in Stack [SP + 2] address. 
 ; The caller doesn't need to pop values from the stack since this procedure does it!            
 Get_Input proc
     ; Get cursor position
