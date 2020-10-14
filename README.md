@@ -1,5 +1,14 @@
 # List of procedures
-
+- [https://github.com/vadimsZinatulins/ProjAC1#init_segments-procedure](Init_Segments)
+- [https://github.com/vadimsZinatulins/ProjAC1#validate_cursor_state-procedure](Validate_Cursor_State)
+- [https://github.com/vadimsZinatulins/ProjAC1#write_space_and_backspace-procedure](Write_Space_And_Backspace)
+- [https://github.com/vadimsZinatulins/ProjAC1#write_line_break-procedure](Write_Line_Break)
+- [https://github.com/vadimsZinatulins/ProjAC1#get_input-procedure](Get_Input)
+- [https://github.com/vadimsZinatulins/ProjAC1#push_to_front-procedure](Push_To_Front)
+- [https://github.com/vadimsZinatulins/ProjAC1#print_num-procedure](Print_Num)
+- [https://github.com/vadimsZinatulins/ProjAC1#run_division_alg-procedure](Run_Division_Alg)
+- [https://github.com/vadimsZinatulins/ProjAC1#run_sqrt_alg-procedure](Run_Sqrt_Alg)
+- [https://github.com/vadimsZinatulins/ProjAC1#run_conversion_alg-procedure](Run_Conversion_Alg)
 
 # Documentation
 ## Init_Segments procedure
