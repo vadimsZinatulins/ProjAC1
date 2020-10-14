@@ -29,12 +29,12 @@
     
     
     ; Global variables  
-    aux_var_a           dw  00h
-    aux_var_b           dw  00h
+    aux_var_a               dw  00h
+    aux_var_b               dw  00h
     
-    line_break          db  0ah, 0dh, "$"
+    line_break              db  0ah, 0dh, "$"
     
-    introduction_msg    db  0ah, 0dh, "Escolha um algoritmo", 0ah, 0dh, "1) Divisao", 0ah, 0dh, "2) Raiz Quadrada", 0ah, 0dh, "3) Conversao", 0ah, 0dh, 0ah, 0dh, "q para sair", 0ah, 0dh, "$"
+    introduction_msg        db  0ah, 0dh, "Escolha um algoritmo", 0ah, 0dh, "1) Divisao", 0ah, 0dh, "2) Raiz Quadrada", 0ah, 0dh, "3) Conversao", 0ah, 0dh, 0ah, 0dh, "q para sair", 0ah, 0dh, "$"
 .code
 
 ; Input: None
@@ -110,6 +110,8 @@ Write_Line_Break endp
 ; in Stack [SP + 4] address and hexadecimal value in Stack [SP + 2] address. 
 ; The caller doesn't need to pop values from the stack since this procedure does it!            
 Get_Input proc
+    mov bp, sp
+    
     ; Get cursor position
     mov ah, 03h
     int 10h
@@ -120,83 +122,62 @@ Get_Input proc
     push bx     ; Store cursor current page aswell (this is needed to restore the current cursor state)
     
     ; Clear [SP + 6] (string input)
-    mov ax, 00h
-    mov al, "0"
-    add sp, 0ah
-    pop di
-    sub sp, 0ch
-    add sp, 0ch
-    pop cx
-    sub sp, 0eh
-    mov ch, 00h
-    dec cx    
+    mov di, [bp + 06h]  ; Get the address of input string and store it in DI
+    mov cx, [bp + 08h]  ; Get the max. number of digits to read and store it in CX (this also stores the flag argument)
+    mov ch, 00h         ; Remove the flag argument from cx
+    dec cx              
 GET_INPUT_CLEAR_STRING_INPUT:
     mov bx, cx
-    mov [di + bx], al
+    mov [di + bx], "0"
     loop GET_INPUT_CLEAR_STRING_INPUT
     mov [di], "0" 
                                           
     ; Clear [SP + 4] (length of the input)
-    mov ax, 00h
-    add sp, 08h
-    pop di
-    sub sp, 0ah
-    mov [di], al 
+    mov di, [bp + 04h]  ; Get the address of the input length and store it in DI
+    mov [di], 00h       ; Reset input lenght
     
     ; Clear [SP + 2] (input's hexadecimal value)
     mov ax, 00h
-    add sp, 06h
-    pop di
-    sub sp, 08h
-    mov [di], ax
+    mov di, [bp + 02h]  ; Get the address of the input value
+    mov [di], ax        ; Reset input length
     
-    ; Get the max. number of digits to read ([SP + 7])  
-    add sp, 0ch
-    pop cx
-    sub sp, 0eh
-    mov ch, 00h
+    ; Get the max. number of digits to read ([SP + 7])
+    mov cx, [bp + 08h]  ; Get the max. number of digits to read and store it in CX (this also stores the flag argument)
+    mov ch, 00h         ; Remove the flag argument from cx
     inc cx
         
 GET_INPUT_PROPT_USER:
     mov ah, 01h
     int 21h
     
-    ; Get the max. number of digits to read ([SP + 7])  
-    add sp, 0ch
-    pop bx
-    sub sp, 0eh
-    mov bh, 00h
-    mov dx, bx
+    ; Get the max. number of digits to read ([SP + 7])
+    mov bx, [bp + 08h]  ; Get the max. number of digits to read and store it in BX (this also stores the flag argument)
+    mov bh, 00h         ; Remove the flag argument from BX
+    mov dx, bx          ; Save the max. number of digits to read into DX
     inc bx
-    sub bx, cx
+    sub bx, cx          ; Get the number of digits already read
     
     cmp al, 0dh ; Compare user input with ENTER
     je GET_INPUT_FINALIZATION
     cmp al, 08h ; Compare user input with BACKSPACE
     je GET_INPUT_BACKSPACE_PRESSED
-    cmp bx, dx ; If di is 1 it means that all 5 bytes are full, user can only input ENTER or BACKSPACE
+    cmp bx, dx ; If bx is greather than dx it means that all 5 bytes are full, user can only input ENTER or BACKSPACE
     jge GET_INPUT_INVALID_NUMBER
     cmp al, 30h ; If user input is less than 30h then it is invalid number
     jl GET_INPUT_INVALID_NUMBER
     cmp al, 39h ; If user input is less than 39h then it is invalid number
     jg GET_INPUT_INVALID_NUMBER
  
-    ; Update [SP + 6](String input)   
-    add sp, 0ah
-    pop di
-    sub sp, 0ch 
+    ; Update [SP + 6](String input)
+    mov di, [bp + 06h]    
     mov [di + bx], al
     
     ; Update [SP + 4](length of the input)
-    add sp, 08h
-    pop di
-    sub sp, 0ah
+    mov di, [bp + 04h]
     inc [di]
     
     ; Update [SP + 2] (input's hexadecimal value)
-    add sp, 06h
-    pop di
-    sub sp, 08h
+    mov di, [bp + 02h}
     mov bx, [di]
     
     push cx         ; Store current loop state
@@ -217,10 +198,8 @@ GET_INPUT_PROPT_USER:
     
     adc dx, dx
     
-    ; Check if overflow validation is needed ([SP + 8])  
-    add sp, 0ch
-    pop bx
-    sub sp, 0eh
+    ; Check if overflow validation is needed ([SP + 8])
+    mov bx, [bp + 08h]  
     cmp bh, 00h
     je GET_INPUT_SKIP_OVERFLOW_VALIDATION
     
@@ -548,9 +527,149 @@ RUN_DIVISION_ALG_TERMINATE:
     ret
 Run_Division_Alg endp
 
-; Input:    ->  sqrt_input_str  -> String from wich pair will be obtained
-;           ->  si              -> Index from wich obtain pair
-; Output:   ->  ax              -> Hexadecimal value of obtained pair
+; Input:    Stack [SP + 6]  -> Start index
+;           Stack [SP + 4]  -> Pair count
+;           Stack [SP + 2]  -> Current result value
+; Output:   AX              -> Final result
+; 
+Calc_Half_Sqrt proc
+    ; Get the pair count
+    add sp, 04h
+    pop cx
+    sub sp, 06h
+    
+CALC_HALF_SQRT_INTEGER_PART:
+    ; Get start index
+    add sp, 06h
+    pop bx
+    sub sp, 08h
+    
+    ; Get next pair index
+    add sp, 04h
+    pop ax
+    sub sp, 06h
+    sub ax, cx
+    shl ax, 01h
+    add ax, bx
+    mov si, ax
+    
+    call Get_Pair
+    
+    push cx
+    
+    mov cx, ax
+    mov ax, aux_var_a
+    mov bx, 064h
+    mov dx, 00h
+    
+    mul bx
+    
+    adc dx, dx
+    
+    add ax, cx
+    
+    adc dx, dx
+    
+    pop cx
+    
+    mov aux_var_a, ax
+    
+    cmp dx, 00h
+    jne CALC_HALF_SQRT_OVERFLOW
+    
+    ; Place the result in DX
+    add sp, 02h
+    pop dx
+    sub sp, 04h
+    
+    ; Multiplicate DX by 2   
+    shl dx, 01h
+    
+    push cx
+    
+    mov cx, 00h
+CALC_HALF_SQRT_INTEGER_PART_FIND_NUMBER:
+    mov ax, dx
+    push dx
+    mov dx, 00h
+    mov bx, 0ah
+    mul bx
+    adc dx, dx
+    add ax, cx
+    adc dx, dx
+    mul cx
+    adc dx, dx
+    
+    mov bx, dx
+    pop dx
+    
+    cmp bx, 00h
+    jne CALC_HALF_SQRT_OVERFLOW 
+    
+    cmp ax, aux_var_a
+    jg CALC_HALF_SQRT_INTEGER_PART_FIND_NUMBER_DONE
+    
+    inc cx
+    jmp CALC_HALF_SQRT_INTEGER_PART_FIND_NUMBER
+    
+CALC_HALF_SQRT_INTEGER_PART_FIND_NUMBER_DONE:
+    
+    dec cx 
+    mov ax, dx
+    mov bx, 0ah
+    mul bx
+    add ax, cx
+    mul cx
+    
+    push ax
+    
+    ; Place the result in AX
+    add sp, 06h
+    pop ax
+    sub sp, 08h
+    
+    mov bx, 0ah
+    mul bx
+    add ax, cx
+    ; Place AX in result
+    add sp, 08h
+    push ax
+    sub sp, 06h
+    
+    pop ax
+    
+    sub aux_var_a, ax
+    
+    pop cx
+ 
+    loop CALC_HALF_SQRT_INTEGER_PART
+    
+    jmp CALC_HALF_SQRT_FINISHED
+     
+CALC_HALF_SQRT_OVERFLOW:
+    ; Log some overflow message...
+    
+CALC_HALF_SQRT_FINISHED:
+    add sp, 02h
+    pop cx
+    sub sp, 04h
+    
+    pop ax  ; Retrieve returning address from stack
+                                                  
+    pop bx  ; Remove Stack [SP + 2] from the stack
+    pop bx  ; Remove Stack [SP + 4] from the stack 
+    pop bx  ; Remove Stack [SP + 6] from the stack
+    
+    push ax ; Place returning address back to stack
+    
+    mov ax, cx
+    
+    ret
+Calc_Half_Sqrt endp
+
+; Input:    sqrt_input_str  -> String from wich pair will be obtained
+;           si              -> Index from wich obtain pair
+; Output:   ax              -> Hexadecimal value of obtained pair
 ; Reads 2 bytes from sqrt_input_str at ax index and converts them into hexadecimal value
 Get_Pair proc
     mov ax, 00h
@@ -588,107 +707,49 @@ Run_Sqrt_Alg proc
     mov aux_var_a, 00h      ; Result
     mov aux_var_b, 00h      ; Remainder
     
-    mov cx, 00
-    mov cl, sqrt_input_len
-    
-RUN_SQRT_ALG_INTEGER_PART:
     mov ax, 00h
     mov al, sqrt_input_len
-    mov si, ax
-    sub si, cx
+    mov bx, 02h
+    div bl
     
-    call Get_Pair
+    mov sqrt_input_len, al
     
-    push cx
+    cmp ah, 00h
+    je RUN_SQRT_ALG_EVEN_INPUT
+    inc sqrt_input_len
+    lea di, sqrt_input_str
+    mov ah, 030h
+    call Push_To_Front
     
-    mov cx, ax
-    mov ax, aux_var_b
-    mov bx, 0ah
-    mov dx, 00h
+RUN_SQRT_ALG_EVEN_INPUT:
+    ; add sqrt_input_len, 02h
+    mov ax, 00h
+    push ax
+    mov al, sqrt_input_len
+    push ax
+    mov ax, 00h
+    push ax  
     
-    mul bx
-    
-    adc dx, dx
-    
-    add ax, cx
-    
-    adc dx, dx
-    
-    pop cx
-    
+    call Calc_Half_Sqrt
     mov aux_var_b, ax
     
-    cmp dx, 00h
-    jne RUN_SQRT_ALG_OVERFLOW
+    mov bx, 00h
+    mov bl, sqrt_input_len
+    shl bx, 01h
+    push bx
+    mov bx, 02h
+    push bx
+    push ax
     
-    push cx
-    
-    mov dx, aux_var_a
-    shl dx, 01h
-    mov cx, 00h
-RUN_SQRT_ALG_INTEGER_PART_FIND_NUMBER:
-    mov ax, dx
-    push dx
-    mov dx, 00h
-    mov bx, 0ah
-    mul bx
-    adc dx, dx
-    add ax, cx
-    adc dx, dx
-    mul cx
-    adc dx, dx
-    
-    mov bx, dx
-    pop dx
-    
-    cmp bx, 00h
-    jne RUN_SQRT_ALG_OVERFLOW 
-    
-    cmp ax, aux_var_b
-    jg RUN_SQRT_ALG_INTEGER_PART_FIND_NUMBER_DONE
-    
-    inc cx
-    jmp RUN_SQRT_ALG_INTEGER_PART_FIND_NUMBER
-    
-RUN_SQRT_ALG_INTEGER_PART_FIND_NUMBER_DONE:
-    
-    dec cx 
-    mov ax, dx
-    mov bx, 0ah
-    mul bx
-    add ax, cx
-    mul cx
+    call Calc_Half_Sqrt
     
     push ax
     
-    mov ax, aux_var_a
-    mov bx, 0ah
-    mul bx
-    add ax, cx
-    mov aux_var_a, ax
-    
-    pop ax
-    
-    sub aux_var_b, ax
+    mov cx, aux_var_b
+    lea di, sqrt_input_str  
+    call Print_Num
     
     pop cx
-    
-    sub cx, 02h
-    cmp cx, 00h
-    jg RUN_SQRT_ALG_INTEGER_PART
-    
-    jmp RUN_SQRT_ALG_FINISHED
-     
-RUN_SQRT_ALG_OVERFLOW:
-    ; Log some overflow message...
-    
-RUN_SQRT_ALG_FINISHED:    
-    ; Print the result
-    lea dx, sqrt_output_msg
-    mov ah, 09h
-    int 21h
-    
-    mov cx, aux_var_a
     lea di, sqrt_input_str  
     call Print_Num
     
@@ -703,10 +764,11 @@ _begin:
     call Init_Segments
     
 MAIN_LOOP:
-    mov dx, 0ffffh
-    mov ax, 02h
-    mov bx, 0ah
-    mul bx
+    mov ax, 0ffffh
+    push ax
+    mov bp, sp
+    mov dx, [bp]    
+    pop ax
     
     
     lea dx, introduction_msg
