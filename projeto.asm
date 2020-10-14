@@ -210,11 +210,19 @@ GET_INPUT_PROPT_USER:
     
     pop cx          ; Restore current loop state
     
+    ; Check if overflow validation is needed ([SP + 8])  
+    add sp, 0ch
+    pop bx
+    sub sp, 0eh
+    cmp bh, 00h
+    je GET_INPUT_SKIP_OVERFLOW_VALIDATION
+    
     ; Check for overflow error (after adition)
     adc dx, dx
     cmp dx, 00h
     jne GET_INPUT_OVERFLOW_ERROR 
-    
+
+GET_INPUT_SKIP_OVERFLOW_VALIDATION:
     mov [di], ax  
     
     loop GET_INPUT_PROPT_USER
@@ -539,6 +547,8 @@ Run_Sqrt_Alg proc
     lea dx, sqrt_ask_input_msg
     mov ah, 09h
     int 21h
+    mov ah, 00h         ; Don't check of overflow
+    mov al, 09h         ; Read at max. 9 digits
     lea ax, sqrt_input_str
     push ax
     lea ax, sqrt_input_len
