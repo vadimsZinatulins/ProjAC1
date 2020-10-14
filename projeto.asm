@@ -23,7 +23,7 @@
     sqrt_ask_input_msg      db  "Introduza o numero: $"
     sqrt_output_msg         db  "Resultado = $"
     
-    sqrt_input_str          db  9 DUP("$")
+    sqrt_input_str          db  12 DUP("0")
     sqrt_input_len          db  0x0h
     sqrt_input_val          dw  0x0h    
     
@@ -548,6 +548,26 @@ RUN_DIVISION_ALG_TERMINATE:
     ret
 Run_Division_Alg endp
 
+; Input:    ->  sqrt_input_str  -> String from wich pair will be obtained
+;           ->  si              -> Index from wich obtain pair
+; Output:   ->  ax              -> Hexadecimal value of obtained pair
+; Reads 2 bytes from sqrt_input_str at ax index and converts them into hexadecimal value
+Get_Pair proc
+    mov ax, 00h
+    mov al, [sqrt_input_str + si + 0]
+    sub al, 30h
+    
+    mov bx, 0ah
+    mul bx 
+    
+    mov bx, 00h
+    mov bl, [sqrt_input_str + si + 1]
+    sub bl, 30h
+    
+    add ax, bx
+    ret
+Get_Pair endp
+
 Run_Sqrt_Alg proc 
     ; Ask for input A
     lea dx, sqrt_ask_input_msg
@@ -563,8 +583,114 @@ Run_Sqrt_Alg proc
     lea ax, sqrt_input_val
     push ax
     call Get_Input
+    call Write_Line_Break
     
+    mov aux_var_a, 00h      ; Result
+    mov aux_var_b, 00h      ; Remainder
     
+    mov cx, 00
+    mov cl, sqrt_input_len
+    
+RUN_SQRT_ALG_INTEGER_PART:
+    mov ax, 00h
+    mov al, sqrt_input_len
+    mov si, ax
+    sub si, cx
+    
+    call Get_Pair
+    
+    push cx
+    
+    mov cx, ax
+    mov ax, aux_var_b
+    mov bx, 0ah
+    mov dx, 00h
+    
+    mul bx
+    
+    adc dx, dx
+    
+    add ax, cx
+    
+    adc dx, dx
+    
+    pop cx
+    
+    mov aux_var_b, ax
+    
+    cmp dx, 00h
+    jne RUN_SQRT_ALG_OVERFLOW
+    
+    push cx
+    
+    mov dx, aux_var_a
+    shl dx, 01h
+    mov cx, 00h
+RUN_SQRT_ALG_INTEGER_PART_FIND_NUMBER:
+    mov ax, dx
+    push dx
+    mov dx, 00h
+    mov bx, 0ah
+    mul bx
+    adc dx, dx
+    add ax, cx
+    adc dx, dx
+    mul cx
+    adc dx, dx
+    
+    mov bx, dx
+    pop dx
+    
+    cmp bx, 00h
+    jne RUN_SQRT_ALG_OVERFLOW 
+    
+    cmp ax, aux_var_b
+    jg RUN_SQRT_ALG_INTEGER_PART_FIND_NUMBER_DONE
+    
+    inc cx
+    jmp RUN_SQRT_ALG_INTEGER_PART_FIND_NUMBER
+    
+RUN_SQRT_ALG_INTEGER_PART_FIND_NUMBER_DONE:
+    
+    dec cx 
+    mov ax, dx
+    mov bx, 0ah
+    mul bx
+    add ax, cx
+    mul cx
+    
+    push ax
+    
+    mov ax, aux_var_a
+    mov bx, 0ah
+    mul bx
+    add ax, cx
+    mov aux_var_a, ax
+    
+    pop ax
+    
+    sub aux_var_b, ax
+    
+    pop cx
+    
+    sub cx, 02h
+    cmp cx, 00h
+    jg RUN_SQRT_ALG_INTEGER_PART
+    
+    jmp RUN_SQRT_ALG_FINISHED
+     
+RUN_SQRT_ALG_OVERFLOW:
+    ; Log some overflow message...
+    
+RUN_SQRT_ALG_FINISHED:    
+    ; Print the result
+    lea dx, sqrt_output_msg
+    mov ah, 09h
+    int 21h
+    
+    mov cx, aux_var_a
+    lea di, sqrt_input_str  
+    call Print_Num
     
     ret
 Run_Sqrt_Alg endp
@@ -577,6 +703,12 @@ _begin:
     call Init_Segments
     
 MAIN_LOOP:
+    mov dx, 0ffffh
+    mov ax, 02h
+    mov bx, 0ah
+    mul bx
+    
+    
     lea dx, introduction_msg
     mov ah, 09h
     int 21h
