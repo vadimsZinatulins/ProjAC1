@@ -100,9 +100,11 @@ Write_Line_Break proc
     ret
 Write_Line_Break endp
 
-; Input:    Stack [SP + 6] -> Address of the inputs string, input string will be stored in this address
-;           Stack [SP + 4] -> Address of the input length, input length will be stored in this address
-;           Stack [SP + 2] -> Address of the input value, input value will be stored in this address
+; Input:    Stack [SP + 8]  ->  Indicate if it is to check for overflow (1 to check, 0 to not check)
+;           Stack [SP + 7]  ->  Max. number of digits to read
+;           Stack [SP + 6]  ->  Address of the inputs string, input string will be stored in this address
+;           Stack [SP + 4]  ->  Address of the input length, input length will be stored in this address
+;           Stack [SP + 2]  ->  Address of the input value, input value will be stored in this address
 ; Output: None
 ; Reads input from the user and stores it's string (ASCII value) in argument Stack [SP + 6] address, input size 
 ; in Stack [SP + 4] address and hexadecimal value in Stack [SP + 2] address. 
@@ -117,7 +119,7 @@ Get_Input proc
                 ; this current column value (important when user presses BACKSPACE key)
     push bx     ; Store cursor current page aswell (this is needed to restore the current cursor state)
     
-    ; Clear [SP - 6] (string input)
+    ; Clear [SP + 6] (string input)
     mov ax, 00h
     mov al, "0"
     add sp, 0ah
@@ -130,27 +132,37 @@ GET_INPUT_CLEAR_STRING_INPUT:
     loop GET_INPUT_CLEAR_STRING_INPUT
     mov [di], "0" 
                                           
-    ; Clear [SP - 4] (length of the input)
+    ; Clear [SP + 4] (length of the input)
     mov ax, 00h
     add sp, 08h
     pop di
     sub sp, 0ah
     mov [di], al 
     
-    ; Clear [SP - 2] (input's hexadecimal value)
+    ; Clear [SP + 2] (input's hexadecimal value)
     mov ax, 00h
     add sp, 06h
     pop di
     sub sp, 08h
     mov [di], ax
     
-    mov cx, 06h
+    ; Get the max. number of digits to read ([SP + 7])  
+    add sp, 0ch
+    pop cx
+    sub sp, 0eh
+    mov ch, 00h
+    inc cx
         
 GET_INPUT_PROPT_USER:
     mov ah, 01h
     int 21h
     
-    mov bx, 06h
+    ; Get the max. number of digits to read ([SP + 7])  
+    add sp, 0ch
+    pop bx
+    sub sp, 0eh
+    mov bh, 00h
+    inc bx
     sub bx, cx
     
     cmp al, 0dh ; Compare user input with ENTER
@@ -164,19 +176,19 @@ GET_INPUT_PROPT_USER:
     cmp al, 39h ; If user input is less than 39h then it is invalid number
     jg GET_INPUT_INVALID_NUMBER
  
-    ; Update [SP - 6](String input)   
+    ; Update [SP + 6](String input)   
     add sp, 0ah
     pop di
     sub sp, 0ch 
     mov [di + bx], al
     
-    ; Update [SP - 4](length of the input)
+    ; Update [SP + 4](length of the input)
     add sp, 08h
     pop di
     sub sp, 0ah
     inc [di]
     
-    ; Update [SP - 2] (input's hexadecimal value)
+    ; Update [SP + 2] (input's hexadecimal value)
     add sp, 06h
     pop di
     sub sp, 08h
@@ -216,7 +228,7 @@ GET_INPUT_INVALID_NUMBER:
 GET_INPUT_BACKSPACE_PRESSED:
     inc cx
     
-    ; Update [SP - 2] (input's hexadecimal value), divide it by 10
+    ; Update [SP + 2] (input's hexadecimal value), divide it by 10
     add sp, 06h
     pop di
     sub sp, 08h
@@ -226,7 +238,7 @@ GET_INPUT_BACKSPACE_PRESSED:
     div bx
     mov [di], ax
     
-    ; Update [SP - 4](length of the input), it needs to be decremented since one character was removed by user
+    ; Update [SP + 4](length of the input), it needs to be decremented since one character was removed by user
     add sp, 08h
     pop di
     sub sp, 0ah
@@ -237,10 +249,10 @@ GET_INPUT_BACKSPACE_PRESSED:
     jle GET_INPUT_CX_FIXED
     mov cx, 06h
     
-    ; Update [SP - 4](length of the input) so it is never less than 0
+    ; Update [SP + 4](length of the input) so it is never less than 0
     mov [di], 00h
     
-    ; Update [SP - 2] (input's hexadecimal value) set it to 0
+    ; Update [SP + 2] (input's hexadecimal value) set it to 0
     add sp, 06h
     pop di
     sub sp, 08h
@@ -319,6 +331,7 @@ GET_INPUT_FINALIZATION:
     pop bx  ; Remove argument [SP + 2] from stack
     pop bx  ; Remove argument [SP + 4] from stack
     pop bx  ; Remove argument [SP + 6] from stack
+    pop bx  ; Remove argument [SP + 7] and [SP + 8] from stack
     
     push ax ; Store return address into stack
     
@@ -346,7 +359,7 @@ PUSH_TO_FRONT_SHIFT:
 Push_To_Front endp
        
 ; Input:    cx  ->  Number to print
-;           di  ->  Pointer to the buffer
+;           di  ->  Reference to the buffer where ASCII value will be written
 ; Ouput: None
 ; Prints the hexadecimal value to screen as ascii 
 Print_Num proc 
@@ -379,6 +392,9 @@ Run_Division_Alg proc
     lea dx, div_ask_input_a_msg
     mov ah, 09h
     int 21h
+    mov ah, 01h         ; Make sure overflow is checked 
+    mov al, 05h         ; Read only at max. 5 digits
+    push ax
     lea ax, div_input_a_str
     push ax
     lea ax, div_input_a_len
@@ -393,6 +409,9 @@ Run_Division_Alg proc
     lea dx, div_ask_input_b_msg
     mov ah, 09h
     int 21h
+    mov ah, 01h         ; Make sure overflow is checked 
+    mov al, 05h         ; Read only at max. 5 digits
+    push ax
     lea ax, div_input_b_str
     push ax
     lea ax, div_input_b_len
