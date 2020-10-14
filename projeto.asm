@@ -10,21 +10,25 @@
     div_ask_input_b_msg     db  "Introduza o divisor: $"
     div_output_a_msg        db  "Resultado = $"
     div_output_b_msg        db  "Resto = $"
-         
+    
+    div_input_a_str         db  5 DUP("$")
+    div_input_a_len         db  0x0h
+    div_input_a_val         dw  0x0h
+    
+    div_input_b_str         db  5 DUP("$")
+    div_input_b_len         db  00h
+    div_input_b_val         dw  00h
+             
     ; SQRT algorithm specific variables
     sqrt_ask_input_msg      db  "Introduza o numero: $"
     sqrt_output_msg         db  "Resultado = $"
     
+    sqrt_input_str          db  9 DUP("$")
+    sqrt_input_len          db  0x0h
+    sqrt_input_val          dw  0x0h    
     
-    ; Global variables
-    input_a_str         db  5 DUP("$")
-    input_a_len         db  0x0h
-    input_a_val         dw  0x0h
     
-    input_b_str         db  5 DUP("$")
-    input_b_len         db  00h
-    input_b_val         dw  00h
-                               
+    ; Global variables  
     aux_var_a           dw  00h
     aux_var_b           dw  00h
     
@@ -324,7 +328,7 @@ Get_Input endp
 ; Input:    di  ->  Buffer address
 ;           ah  ->  Value to insert
 ; Output: None
-; Shifts buffer to the right and insert bh at front
+; Shifts buffer (referenced by DI) to the right and inserts BH at the beginning
 Push_To_Front proc
     mov cx, 04h
 
@@ -341,13 +345,12 @@ PUSH_TO_FRONT_SHIFT:
     ret
 Push_To_Front endp
        
-; Input:    cx  -> Number to print
+; Input:    cx  ->  Number to print
+;           di  ->  Pointer to the buffer
 ; Ouput: None
 ; Prints the hexadecimal value to screen as ascii 
 Print_Num proc 
-    mov [input_b_str], "$"
-    lea di, input_b_str
-    
+    mov [di], "$"    
 PRINT_NUM_START:
     mov ax, cx
     mov bx, 0ah
@@ -364,7 +367,7 @@ PRINT_NUM_START:
     cmp cx, 00h
     jg PRINT_NUM_START
                
-    lea dx, input_b_str
+    mov dx, di
     mov ah, 09h       
     int 21h
     
@@ -376,11 +379,11 @@ Run_Division_Alg proc
     lea dx, div_ask_input_a_msg
     mov ah, 09h
     int 21h
-    lea ax, input_a_str
+    lea ax, div_input_a_str
     push ax
-    lea ax, input_a_len
+    lea ax, div_input_a_len
     push ax
-    lea ax, input_a_val
+    lea ax, div_input_a_val
     push ax
     call Get_Input
     
@@ -390,15 +393,15 @@ Run_Division_Alg proc
     lea dx, div_ask_input_b_msg
     mov ah, 09h
     int 21h
-    lea ax, input_b_str
+    lea ax, div_input_b_str
     push ax
-    lea ax, input_b_len
+    lea ax, div_input_b_len
     push ax
-    lea ax, input_b_val
+    lea ax, div_input_b_val
     push ax
     call Get_Input
     
-    cmp input_b_val, 00h
+    cmp div_input_b_val, 00h
     je RUN_DIVISION_ALG_INF
                       
     mov aux_var_a, 00h      ; Remainder
@@ -406,14 +409,14 @@ Run_Division_Alg proc
     mov di, 00h
 RUN_DIVISION_ALG_CALC_REMAINDER:
     mov ax, 00h
-    mov al, input_a_len
+    mov al, div_input_a_len
     cmp di, ax
     jge RUN_DIVISION_ALG_FINISHED
     
     mov ax, 0ah
     
     mov bx, 00h
-    mov bl, [input_a_str + di]
+    mov bl, [div_input_a_str + di]
     sub bx, 30h
     inc di
     
@@ -423,13 +426,13 @@ RUN_DIVISION_ALG_CALC_REMAINDER:
     add ax, bx
     mov aux_var_a, ax
     
-    cmp ax, input_b_val
+    cmp ax, div_input_b_val
     jl RUN_DIVISION_ALG_CALC_REMAINDER
     
     mov cx, 00h
 RUN_DIVISION_ALG_CALC_NEW_DIGIT:
     mov ax, cx
-    mul input_b_val
+    mul div_input_b_val
     
     cmp ax, aux_var_a
     jg RUN_DIVISION_ALG_CALC_DIGIT_FOUND:
@@ -441,7 +444,7 @@ RUN_DIVISION_ALG_CALC_NEW_DIGIT:
 RUN_DIVISION_ALG_CALC_DIGIT_FOUND:
     dec cx
     mov ax, cx
-    mul input_b_val
+    mul div_input_b_val
     
     sub aux_var_a, ax
     
@@ -451,7 +454,7 @@ RUN_DIVISION_ALG_CALC_DIGIT_FOUND:
     mov aux_var_b, ax
                       
     mov ax, 00h
-    mov al, input_a_len
+    mov al, div_input_a_len
     cmp di, ax
     jl RUN_DIVISION_ALG_CALC_REMAINDER
      
@@ -463,7 +466,8 @@ RUN_DIVISION_ALG_FINISHED:
     mov ah, 09h
     int 21h
     
-    mov cx, aux_var_b  
+    mov cx, aux_var_b
+    lea di, div_input_b_str  
     call Print_Num  
     
     call Write_Line_Break
@@ -474,15 +478,16 @@ RUN_DIVISION_ALG_FINISHED:
     int 21h
     
     mov cx, aux_var_a
+    lea di, div_input_b_str
     call Print_Num
     
     jmp RUN_DIVISION_ALG_TERMINATE
       
 RUN_DIVISION_ALG_INF:
-    mov [input_b_str + 0], "I"
-    mov [input_b_str + 1], "N"
-    mov [input_b_str + 2], "F"
-    mov [input_b_str + 3], "$"
+    mov [div_input_b_str + 0], "I"
+    mov [div_input_b_str + 1], "N"
+    mov [div_input_b_str + 2], "F"
+    mov [div_input_b_str + 3], "$"
     
     call Write_Line_Break
     
@@ -491,7 +496,7 @@ RUN_DIVISION_ALG_INF:
     mov ah, 09h
     int 21h
     
-    lea dx, input_b_str
+    lea dx, div_input_b_str
     mov ah, 09h
     int 21h
     
@@ -502,7 +507,7 @@ RUN_DIVISION_ALG_INF:
     mov ah, 09h
     int 21h
     
-    lea dx, input_b_str
+    lea dx, div_input_b_str
     mov ah, 09h
     int 21h
 RUN_DIVISION_ALG_TERMINATE:
@@ -515,11 +520,11 @@ Run_Sqrt_Alg proc
     lea dx, sqrt_ask_input_msg
     mov ah, 09h
     int 21h
-    lea ax, input_a_str
+    lea ax, sqrt_input_str
     push ax
-    lea ax, input_a_len
+    lea ax, sqrt_input_len
     push ax
-    lea ax, input_a_val
+    lea ax, sqrt_input_val
     push ax
     call Get_Input
     
