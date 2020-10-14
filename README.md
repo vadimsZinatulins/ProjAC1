@@ -1,23 +1,23 @@
 # Procedures Documentation
-## Init_Segments
-### Inputs
+## Init_Segments procedure
+#### Inputs
 None
-### Outputs
+#### Outputs
 None
-### Description
+#### Description
 Initializes  DS and ES (i.e. makes them reference .data segment)
 
-## Validate_Cursor_State
-### Inputs
+## Validate_Cursor_State procedure
+#### Inputs
 -AX: Cursor current state (Row and Column)
 -DX: Cursor old state (Row and Column)
 -BL: Cursor old page
-### Outputs
+#### Outputs
 None
-### Description
+### #Description
 Compares the column of the cursor in the current state with the column of old state, and if the current state is less than old state then the cursor will be reset to the old state.
 
-## Write_Backspace
+## Write_Backspace procedure
 ### Inputs
 None
 ### Outputs
@@ -25,7 +25,7 @@ None
 ### Description
 Writes a BACKSPACE character to the screen
 
-## Write_Space_And_Backspace
+## Write_Space_And_Backspace procedure
 ### Inputs
 None
 ### Outputs
@@ -33,7 +33,7 @@ None
 ### Description
 Writes SPACE character followed by BACKSPACE character to the screen
 
-## Write_Line_Break
+## Write_Line_Break procedure
 ### Inputs
 None
 ### Outputs
@@ -41,7 +41,7 @@ None
 ### Description
 Writes a line break to the screen (i.e. advances cursor to the next line)
 
-## Get_Input
+## Get_Input procedure
 ### Inputs
 - Stack [SP + 6]: Address of the inputs string, input string will be stored in this address
 - Stack [SP + 4]: Address of the input length, input length will be stored in this address
@@ -53,7 +53,7 @@ Reads input from the user and stores it's string (ASCII value) in argument Stack
 
 The caller doesn't need to pop values from the stack since this procedure does it!
 
-## Push_To_Front
+## Push_To_Front procedure
 ### Inputs
 - DI
 - AH
@@ -62,7 +62,7 @@ None
 ### Description
 Shifts buffer (referenced by DI) to the right and inserts BH at the beginning
 
-## Print_Num
+## Print_Num procedure
 ### Inputs
 - CX
 ### Outputs
@@ -70,17 +70,17 @@ None
 ### Description
 Prints the hexadecimal value to screen in ASCII format
 
-## Run_Division_Alg
+## Run_Division_Alg procedure
 ### Inputs
 ### Outputs
 ### Description
 
-## Run_Sqrt_Alg
+## Run_Sqrt_Alg procedure
 ### Inputs
 ### Outputs
 ### Description
 
-## Run_Conversion_Alg
+## Run_Conversion_Alg procedure
 ### Inputs
 ### Outputs
 ### Description
