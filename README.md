@@ -67,6 +67,18 @@ Reads input from the user and stores it's string (ASCII value) in argument Stack
 
 The caller doesn't need to pop values from the stack since this procedure does it!
 
+    Input Stack layout
+    +-------+
+    | 8 | 7 |   -> 1 byte for flag + 1 byte for max. digits to read
+    +-------+
+    |   6   |   -> 2 bytes for string address
+    +-------+
+    |   4   |   -> 2 bytes for length address
+    +-------+
+    |   2   |   -> 2 bytes for value address
+    +-------+
+
+
 ## Push_To_Front procedure
 #### Inputs
 - DI
