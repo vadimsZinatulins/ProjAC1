@@ -222,9 +222,7 @@ GET_INPUT_BACKSPACE_PRESSED:
     inc cx
     
     ; Update [SP + 2] (input's hexadecimal value), divide it by 10
-    add sp, 06h
-    pop di
-    sub sp, 08h
+    mov di, [bp + 02h]
     mov ax, [di]
     mov bx, 0ah
     mov dx, 00h
@@ -232,9 +230,7 @@ GET_INPUT_BACKSPACE_PRESSED:
     mov [di], ax
     
     ; Update [SP + 4](length of the input), it needs to be decremented since one character was removed by user
-    add sp, 08h
-    pop di
-    sub sp, 0ah
+    mov di, [bp + 04h]
     dec [di]
     
     ; Make sure cx is never bigger than 6
@@ -246,9 +242,7 @@ GET_INPUT_BACKSPACE_PRESSED:
     mov [di], 00h
     
     ; Update [SP + 2] (input's hexadecimal value) set it to 0
-    add sp, 06h
-    pop di
-    sub sp, 08h
+    mov di, [bp + 02h]
     mov ax, 00h
     mov [di], ax                         
 GET_INPUT_CX_FIXED:    
@@ -288,10 +282,8 @@ GET_INPUT_OVERFLOW_ERROR:
     
     mov ah, 02h
     int 10h
-    
-    add sp, 0ah
-    pop di
-    sub sp, 0ch
+     
+    mov di, [bp + 04h] 
     mov [di + 0], " "
     mov [di + 1], " "
     mov [di + 2], " "
@@ -763,14 +755,7 @@ Run_Conversion_Alg endp
 _begin:        
     call Init_Segments
     
-MAIN_LOOP:
-    mov ax, 0ffffh
-    push ax
-    mov bp, sp
-    mov dx, [bp]    
-    pop ax
-    
-    
+MAIN_LOOP:    
     lea dx, introduction_msg
     mov ah, 09h
     int 21h
