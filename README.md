@@ -1,14 +1,17 @@
 # List of procedures
 - [Init_Segments](https://github.com/vadimsZinatulins/ProjAC1#init_segments-procedure)
-- [Validate_Cursor_State](https://github.com/vadimsZinatulins/ProjAC1#validate_cursor_state-procedure)
-- [Write_Space_And_Backspace](https://github.com/vadimsZinatulins/ProjAC1#write_space_and_backspace-procedure)
-- [Write_Line_Break](https://github.com/vadimsZinatulins/ProjAC1#write_line_break-procedure)
-- [Get_Input](https://github.com/vadimsZinatulins/ProjAC1#get_input-procedure)
-- [Push_To_Front](https://github.com/vadimsZinatulins/ProjAC1#push_to_front-procedure)
-- [Print_Num](https://github.com/vadimsZinatulins/ProjAC1#print_num-procedure)
-- [Run_Division_Alg](https://github.com/vadimsZinatulins/ProjAC1#run_division_alg-procedure)
-- [Run_Sqrt_Alg](https://github.com/vadimsZinatulins/ProjAC1#run_sqrt_alg-procedure)
-- [Run_Conversion_Alg](https://github.com/vadimsZinatulins/ProjAC1#run_conversion_alg-procedure)
+- [Print_Line_Break](https://github.com/vadimsZinatulins/ProjAC1#Print_Line_Break-procedure)
+- [Validate_Character](https://github.com/vadimsZinatulins/ProjAC1#Validate_Character-procedure)
+- [Get_Input_Str](https://github.com/vadimsZinatulins/ProjAC1#Get_Input_Str-procedure)
+- [Print_Number](https://github.com/vadimsZinatulins/ProjAC1#Print_Number-procedure)
+- [Push_To_Front](https://github.com/vadimsZinatulins/ProjAC1#Push_To_Front-procedure)
+- [Mul_By_100](https://github.com/vadimsZinatulins/ProjAC1#Mul_By_100-procedure)
+- [Mul_By_10](https://github.com/vadimsZinatulins/ProjAC1#Mul_By_10-procedure)
+- [Check_Is_Above_32](https://github.com/vadimsZinatulins/ProjAC1#Check_Is_Above_32-procedure)
+- [Get_Next_Word](https://github.com/vadimsZinatulins/ProjAC1#Get_Next_Word-procedure)
+- [Run_Division_Alg](https://github.com/vadimsZinatulins/ProjAC1#Run_Division_Alg-procedure)
+- [Find_Sqrt_Next_Digit](https://github.com/vadimsZinatulins/ProjAC1#Find_Sqrt_Next_Digit-procedure)
+- [Run_Sqrt_Alg](https://github.com/vadimsZinatulins/ProjAC1#Run_Sqrt_Alg-procedure)
 
 # Documentation
 ## Init_Segments procedure
@@ -19,95 +22,62 @@ None
 #### Description
 Initializes  DS and ES (i.e. makes them reference .data segment)
 
-## Validate_Cursor_State procedure
+## Print_Line_Break procedure
 #### Inputs
-- AX: Cursor current state (Row and Column)
-- DX: Cursor old state (Row and Column)
-- BL: Cursor old page
 #### Outputs
-None
 #### Description
-Compares the column of the cursor in the current state with the column of old state, and if the current state is less than old state then the cursor will be reset to the old state.
 
-## Write_Backspace procedure
+## Validate_Character procedure
 #### Inputs
-None
 #### Outputs
-None
 #### Description
-Writes a BACKSPACE character to the screen
 
-## Write_Space_And_Backspace procedure
+## Get_Input_Str procedure
 #### Inputs
-None
 #### Outputs
-None
 #### Description
-Writes SPACE character followed by BACKSPACE character to the screen
 
-## Write_Line_Break procedure
+## Print_Number procedure
 #### Inputs
-None
 #### Outputs
-None
 #### Description
-Writes a line break to the screen (i.e. advances cursor to the next line)
-
-## Get_Input procedure
-#### Inputs
-- Stack [SP + 8]: Flag used to indicate if overflow validation should be done or not (1 do validation, 0 skip validation)
-- Stack [SP + 7]: Maximum number of digits to read from user
-- Stack [SP + 6]: Address of the inputs string, input string will be stored in this address
-- Stack [SP + 4]: Address of the input length, input length will be stored in this address
-- Stack [SP + 2]: Address of the input value, input value will be stored in this address
-#### Outputs
-None
-#### Description
-Reads input from the user and stores it's string (ASCII value) in argument Stack [SP + 6] address, input size in Stack [SP + 4] address and hexadecimal value in Stack [SP + 2] address.
-
-The caller doesn't need to pop values from the stack since this procedure does it!
-
-    Input Stack layout
-    +-------+
-    | 8 | 7 |   -> 1 byte for flag + 1 byte for max. digits to read
-    +-------+
-    |   6   |   -> 2 bytes for string address
-    +-------+
-    |   4   |   -> 2 bytes for length address
-    +-------+
-    |   2   |   -> 2 bytes for value address
-    +-------+
-
 
 ## Push_To_Front procedure
 #### Inputs
-- DI: Buffer address
-- AH: Value to insert
 #### Outputs
-None
 #### Description
-Shifts buffer (referenced by DI) to the right and inserts BH at the beginning
 
-## Print_Num procedure
+## Mul_By_100 procedure
 #### Inputs
-- CX: Number to print
-- DI: Reference to the buffer where ASCII value will be written
 #### Outputs
-None
 #### Description
-Prints the hexadecimal value to screen in ASCII format
+
+## Mul_By_10 procedure
+#### Inputs
+#### Outputs
+#### Description
+
+## Check_Is_Above_32 procedure
+#### Inputs
+#### Outputs
+#### Description
+
+## Get_Next_Word procedure
+#### Inputs
+#### Outputs
+#### Description
 
 ## Run_Division_Alg procedure
 #### Inputs
 #### Outputs
 #### Description
 
-## Run_Sqrt_Alg procedure
+## Find_Sqrt_Next_Digit procedure
 #### Inputs
 #### Outputs
 #### Description
 
-## Run_Conversion_Alg procedure
+## Run_Sqrt_Alg procedure
 #### Inputs
 #### Outputs
 #### Description
