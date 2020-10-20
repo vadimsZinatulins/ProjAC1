@@ -21,9 +21,9 @@ Initializes  DS and ES (i.e. makes them reference .data segment)
 
 ## Validate_Cursor_State procedure
 #### Inputs
--AX: Cursor current state (Row and Column)
--DX: Cursor old state (Row and Column)
--BL: Cursor old page
+- AX: Cursor current state (Row and Column)
+- DX: Cursor old state (Row and Column)
+- BL: Cursor old page
 #### Outputs
 None
 #### Description
@@ -81,8 +81,8 @@ The caller doesn't need to pop values from the stack since this procedure does i
 
 ## Push_To_Front procedure
 #### Inputs
-- DI
-- AH
+- DI: Buffer address
+- AH: Value to insert
 #### Outputs
 None
 #### Description
