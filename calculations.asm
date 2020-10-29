@@ -106,6 +106,55 @@ Add_Array endp
 
 ; Input:
 ;   DI -> Address of the destination array of words
+;   AL -> Word to add
+; Output:
+; Description:
+;   [DI] = [DI] + AX
+Add_Word_To_Array proc
+    pusha
+    
+    add [di], ax           
+    adc [di + 0x02h], 0x0000h
+    adc [di + 0x03h], 0x0000h
+    adc [di + 0x04h], 0x0000h
+    adc [di + 0x05h], 0x0000h
+    adc [di + 0x06h], 0x0000h
+    adc [di + 0x07h], 0x0000h
+    adc [di + 0x08h], 0x0000h
+    adc [di + 0x09h], 0x0000h
+    adc [di + 0x0ah], 0x0000h
+    adc [di + 0x0bh], 0x0000h
+    
+    popa
+    ret
+Add_Word_To_Array endp
+
+; Input:
+;   DI -> Address of the destination array of words
+;   AL -> Word to add
+; Output:
+; Description:
+;   [DI] = [DI] - AX
+Sub_Word_To_Array proc
+    pusha
+    
+    sub [di], ax           
+    sbb [di + 0x02h], 0x0000h
+    sbb [di + 0x03h], 0x0000h
+    sbb [di + 0x04h], 0x0000h
+    sbb [di + 0x05h], 0x0000h
+    sbb [di + 0x06h], 0x0000h
+    sbb [di + 0x07h], 0x0000h
+    sbb [di + 0x08h], 0x0000h
+    sbb [di + 0x09h], 0x0000h
+    sbb [di + 0x0ah], 0x0000h
+    sbb [di + 0x0bh], 0x0000h
+    
+    popa
+    ret
+Sub_Word_To_Array endp
+; Input:
+;   DI -> Address of the destination array of words
 ;   SI -> Address of the source array of words
 ; Output:
 ; Description:
@@ -142,7 +191,7 @@ _begin:
     call Init_Segments
                          
     mov input_a[0], 0x00h
-    mov input_a[1], 0xffh
+    mov input_a[1], 0x00h
     mov input_a[2], 0xffh
     mov input_a[3], 0xffh
     mov input_a[4], 0xffh
@@ -150,24 +199,13 @@ _begin:
     mov input_a[6], 0xffh
     mov input_a[7], 0xffh
     mov input_a[8], 0xffh
-    mov input_a[9], 0xffh
-    mov input_a[10], 0x01h
-    
-    mov input_b[0], 0xffh
-    mov input_b[1], 0xffh
-    mov input_b[2], 0xffh
-    mov input_b[3], 0xffh
-    mov input_b[4], 0xffh
-    mov input_b[5], 0xffh
-    mov input_b[6], 0xffh
-    mov input_b[7], 0xffh
-    mov input_b[8], 0xffh
-    mov input_b[9], 0xffh    
+    mov input_a[9], 0xffh    
     
     lea di, input_a               
     lea si, input_b
-        
-    call Sub_Array
+    
+    mov ax, 0xffffh     
+    call Sub_Word_To_Array
     
     mov ah, 0x4ch
         int 21h
