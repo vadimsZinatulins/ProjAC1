@@ -187,26 +187,39 @@ SUB_ARRAY_LOOP:
     ret
 Sub_Array endp
 
+; Input:
+;   DI -> Address of the destination array of words
+;   SI -> Address of the source array of words
+;   AL -> Multiply value
+; Output:
+; Description:
+;   [DI] = [SI] x AL
+Mul_By_Byte proc
+    pusha
+    
+    mov cx, 0x0000h
+    mov cl, al
+    
+MUL_BY_BYTE_LOOP:
+    call Add_Array 
+    loop MUL_BY_BYTE_LOOP
+    
+    popa
+    ret
+Mul_By_Byte endp
+
 _begin:
     call Init_Segments
-                         
-    mov input_a[0], 0x00h
-    mov input_a[1], 0x00h
-    mov input_a[2], 0xffh
-    mov input_a[3], 0xffh
-    mov input_a[4], 0xffh
-    mov input_a[5], 0xffh
-    mov input_a[6], 0xffh
-    mov input_a[7], 0xffh
-    mov input_a[8], 0xffh
-    mov input_a[9], 0xffh    
+                 
+    mov input_b[0x00], 0xff
     
-    lea di, input_a               
-    lea si, input_b
+    lea di, input_a
+    lea si, input_b 
     
-    mov ax, 0xffffh     
-    call Sub_Word_To_Array
+    mov ax, 0x0009h
     
+    call Mul_By_Byte
+     
     mov ah, 0x4ch
-        int 21h
+    int 21h
 end _begin
