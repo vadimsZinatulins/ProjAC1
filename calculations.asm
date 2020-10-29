@@ -3,8 +3,8 @@
 .stack 100h
 
 .data
-    input_a     db  10 dup(0x00h)
-    input_b     db  10 dup(0x00h)
+    input_a     db  12 dup(0x00h)
+    input_b     db  12 dup(0x00h)
     
 .code
 
@@ -19,124 +19,156 @@ Init_Segments proc
     ret
 Init_Segments endp
 
-; Inputs:
-;           DI -> Address for input a
-;           SI -> Address for input b
-;           AL -> Array size
-; Outputs:
-;           AH -> If 0x00 then OK else Overflow error
+; Input:
+;   DL -> Base
+;   SI -> Address of the source array of bytes
+; Output:
+;
 ; Description:
-;           [DI] = [DI] + [SI]
-Array_Add proc
-    pusha
+;   Prints the number in the array as ASCII in a specified base number.
+Print_Array proc
+    pusha 
     
-    dec al
-    mov cx, 0x00h
-    mov cl, al
+    mov ax, 0x00h
+    mov cx, 0x0h
+PRINT_ARRAY_LOOP:
+    mov ax, 0x00h
+    mov bx, cx
+    mov al, [si + bx]
     
-    ; This will set carry flag to 0 and dx to 0
-    xor dx, dx
-ARRAY_ADD_BEGIN:
-    mov bx, cx 
-    mov dl, [si + bx]
-    adc [di + bx], dl
-         
-    loop ARRAY_ADD_BEGIN
+    div dl
     
-    mov dl, [si]
-    adc [di], dl
+    ; If the remainder is above 9 then add 0x41h (to turn 
+    ; it into a alphabetical character in ASCII code)
+    cmp ah, 0x09h
+    ja PRINT_ARRAY_ADD_41H
     
-    jc ARRAY_ADD_OVERFLOW
+    add ah, 0x30h
+    jmp PRINT_ARRAY_NEXT_LOOP_ITERATION: 
+
+PRINT_ARRAY_ADD_41H:
+    add ah, 0x41h
+    
+PRINT_ARRAY_NEXT_LOOP_ITERATION:
+    ; Store the ASCII value in the stack (in LSB of the word)
+    mov al, ah
+    mov ah, 0x02h
+    push ax
+    
+    inc cx
+    cmp cx, 0x0ah
+    jb PRINT_ARRAY_LOOP
+    
+    mov cx, 0x0bh
+PRINT_ARRAY_PRINT_LOOP:
+    pop ax
+    mov dl, al
+    int 0x21h
+    loop PRINT_ARRAY_PRINT_LOOP
     
     popa
-    mov ah, 0x00h
-    
-    jmp ARRAY_ADD_END
-    
-ARRAY_ADD_OVERFLOW:    
-    popa
-    mov ah, 0x01h
-        
-ARRAY_ADD_END:
-    
     ret
-Array_Add endp
-
-; Inputs:
-;           DI -> Address for input a
-;           SI -> Address for input b
-;           AL -> Array size
-; Outputs:
-;           AH -> If 0x00 then OK else Overflow error
-; Description:
-;           [DI] = [DI] - [SI]
-Array_Sub proc
-    pusha
-    
-    dec al
-    mov cx, 0x00h
-    mov cl, al
-    
-    ; This will set carry flag to 0 and dx to 0
-    xor dx, dx
-ARRAY_SUB_BEGIN:
-    mov bx, cx 
-    mov dl, [si + bx]
-    sbb [di + bx], dl
-         
-    loop ARRAY_SUB_BEGIN
-    
-    mov dl, [si]
-    sbb [di], dl
-    
-    jc ARRAY_SUB_OVERFLOW
-    
-    popa
-    mov ah, 0x00h
-    
-    jmp ARRAY_SUB_END
-    
-ARRAY_SUB_OVERFLOW:    
-    popa
-    mov ah, 0x01h
-
-ARRAY_SUB_END:
-
-    ret
-Array_Sub endp
+Print_Array endp
 
 ; Inputs:
-;           DI -> Address for input a
-;           SI -> Address for input b
-;           AL -> Array size
+;   DI -> Address of the destination array of words
+;   SI -> Address of the source array of words
 ; Outputs:
-;           AH -> If 0x00 then OK else Overflow error
 ; Description:
-;           [DI] = [DI] x [SI]
-Array_Mul proc
+;   [DI] = [DI] + [SI]
+Add_Array proc
     pusha
-    popa
+                 
+    mov cx, 0x02h
+    mov dx, [si]
+    add [di], dx
     
+    pushf
+    
+ADD_ARRAY_LOOP:
+    mov bx, cx
+    mov dx, [si + bx]
+    popf
+    adc [di + bx], dx
+    pushf
+    
+    add cx, 0x02h
+    cmp cx, 0xah
+    jb ADD_ARRAY_LOOP    
+    popf
+    
+    mov dx, [si + 0x0ah]
+    adc [di + 0x0ah], dx
+    
+    popa
     ret
-Array_Mul endp
+Add_Array endp
+
+; Input:
+;   DI -> Address of the destination array of words
+;   SI -> Address of the source array of words
+; Output:
+; Description:
+;   [DI] = [DI] - [SI]
+Sub_Array proc
+    pusha
+    
+    mov cx, 0x02h
+    mov dx, [si]
+    sub [di], dx
+    
+    pushf
+    
+SUB_ARRAY_LOOP:
+    mov bx, cx
+    mov dx, [si + bx]
+    popf
+    sbb [di + bx], dx
+    pushf
+    
+    add cx, 0x02h
+    cmp cx, 0xah
+    jb SUB_ARRAY_LOOP    
+    popf
+    
+    mov dx, [si + 0x0ah]
+    sbb [di + 0x0ah], dx
+    
+    popa
+    ret
+Sub_Array endp
+
 _begin:
     call Init_Segments
                          
-    mov input_a[0], 0xffh
+    mov input_a[0], 0x00h
     mov input_a[1], 0xffh
-    mov input_a[2], 0x00h
-                            
-    mov input_b[0], 0x00h
+    mov input_a[2], 0xffh
+    mov input_a[3], 0xffh
+    mov input_a[4], 0xffh
+    mov input_a[5], 0xffh
+    mov input_a[6], 0xffh
+    mov input_a[7], 0xffh
+    mov input_a[8], 0xffh
+    mov input_a[9], 0xffh
+    mov input_a[10], 0x01h
+    
+    mov input_b[0], 0xffh
     mov input_b[1], 0xffh
     mov input_b[2], 0xffh
+    mov input_b[3], 0xffh
+    mov input_b[4], 0xffh
+    mov input_b[5], 0xffh
+    mov input_b[6], 0xffh
+    mov input_b[7], 0xffh
+    mov input_b[8], 0xffh
+    mov input_b[9], 0xffh    
     
-    mov al, 03h
-                   
-    lea di, input_a
+    lea di, input_a               
     lea si, input_b
-    
-    call Array_Sub
+        
+    call Sub_Array
     
     mov ah, 0x4ch
-    int 21h
+        int 21h
 end _begin
