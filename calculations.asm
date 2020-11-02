@@ -241,6 +241,108 @@ MUL_BY_BYTE_DO_SHIFT:
     popa
     ret
 Mul_By_Byte endp    
+        
+; Input:
+;   DI -> Address of the destination array of words
+;   SI -> Address of the source array of words
+;   AL -> Divide value
+; Output:
+;   AH -> Remainder
+; Description:
+;   [DI] = [SI] / AL
+;    AH  = [SI] % AL
+Div_By_Byte proc
+    pusha
+    
+    mov ah, 00h
+    mov bx, 00h
+    mov cx, 059h
+
+DIV_BY_BYTE_LOOP:
+    shl bx, 01h
+    push ax
+    mov ax, cx
+    call Get_Bit_At
+    pop ax
+    adc bx, 00h
+    
+    cmp bx, ax
+    jb DIV_BY_BYTE_CONTINUE_LOOP
+    
+    
+    
+DIV_BY_BYTE_CONTINUE_LOOP:    
+    loop DIV_BY_BYTE_LOOP
+    
+    popa
+    ret
+Div_By_Byte endp 
+
+; Input: 
+;   SI -> Address of the siyrce array
+;   AX -> Bit index [0 - 95]
+; Output:
+;   CF -> Indicates the value of the bit at AX index
+; Description:
+;
+Get_Bit_At proc
+    pusha
+    
+    clc
+              
+    push ax
+    mov bx, 0bh
+    div bx
+    mov bx, ax
+    pop ax
+    
+    mov cx, 08h
+    div cx
+    mov cx, dx
+    
+    mov al, 01h
+    
+    shl al, cl
+    test [si + bx], al
+    jnz GET_BIT_AT_SET_FLAG
+    
+    jmp GET_BIT_AT_RETURN
+GET_BIT_AT_SET_FLAG:
+    stc
+    
+GET_BIT_AT_RETURN:
+    
+    popa
+    ret
+Get_Bit_At endp
+
+; Input: 
+;   SI -> Address of the siyrce array
+;   AX -> Bit index [0 - 95]
+; Output:
+; Description:
+;
+Set_Bit_At proc
+    pusha
+    
+    push ax
+    mov bx, 0bh
+    div bx
+    mov bx, ax
+    pop ax
+    
+    mov cx, 08h
+    div cx
+    mov cx, dx
+    
+    mov al, 01h
+    
+    shl al, cl
+    or [si + bx], al
+    
+    popa
+    ret
+Set_Bit_At endp
 
 ; Input:
 ;   DI -> Address of the destination array of words
@@ -319,7 +421,7 @@ Rotate_Left_Array endp
 
 _begin:
     call Init_Segments  
-     
+    
     mov input_b[00h], 0ffh
     
     lea di, input_a
