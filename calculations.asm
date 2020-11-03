@@ -255,23 +255,30 @@ Div_By_Byte proc
     pusha
     
     mov ah, 00h
-    mov bx, 00h
-    mov cx, 059h
+    mov dx, 00h
+    mov cx, 60h
 
 DIV_BY_BYTE_LOOP:
-    shl bx, 01h
+    shl dx, 01h
     push ax
     mov ax, cx
+    dec ax
     call Get_Bit_At
     pop ax
-    adc bx, 00h
+    adc dx, 00h
     
-    cmp bx, ax
+    cmp dx, ax
     jb DIV_BY_BYTE_CONTINUE_LOOP
+ 
+    sub dx, ax
     
+    push ax
+    mov ax, cx
+    dec ax
+    call Set_Bit_At
+    pop ax
     
-    
-DIV_BY_BYTE_CONTINUE_LOOP:    
+DIV_BY_BYTE_CONTINUE_LOOP:
     loop DIV_BY_BYTE_LOOP
     
     popa
@@ -288,17 +295,16 @@ Div_By_Byte endp
 Get_Bit_At proc
     pusha
     
+    mov dx, 00h
+    
     clc
               
     push ax
-    mov bx, 0bh
+    mov bx, 08h
     div bx
     mov bx, ax
-    pop ax
-    
-    mov cx, 08h
-    div cx
     mov cx, dx
+    pop ax
     
     mov al, 01h
     
@@ -317,7 +323,7 @@ GET_BIT_AT_RETURN:
 Get_Bit_At endp
 
 ; Input: 
-;   SI -> Address of the siyrce array
+;   DI -> Address of the siyrce array
 ;   AX -> Bit index [0 - 95]
 ; Output:
 ; Description:
@@ -325,20 +331,19 @@ Get_Bit_At endp
 Set_Bit_At proc
     pusha
     
+    mov dx, 00h
+    
     push ax
-    mov bx, 0bh
+    mov bx, 08h
     div bx
     mov bx, ax
-    pop ax
-    
-    mov cx, 08h
-    div cx
     mov cx, dx
+    pop ax
     
     mov al, 01h
     
     shl al, cl
-    or [si + bx], al
+    or [di + bx], al
     
     popa
     ret
@@ -423,13 +428,14 @@ _begin:
     call Init_Segments  
     
     mov input_b[00h], 0ffh
+    mov input_b[02h], 0ffh
     
     lea di, input_a
     lea si, input_b 
     
-    mov ax, 0ffh
+    mov ax, 0ch
     
-    call Mul_By_Byte
+    call Div_By_Byte
      
     mov ah, 0x4ch
     int 21h
