@@ -6,6 +6,7 @@
     input_a     db  12 dup(00h)
     input_b     db  12 dup(00h)
     
+    
 .code
 
 Init_Segments proc
@@ -30,12 +31,16 @@ Print_Array proc
     pusha 
     
     mov ax, 00h
-    mov cx, 0h
+    mov cx, 00h
 PRINT_ARRAY_LOOP:
     mov ax, 00h
     mov bx, cx
     mov al, [si + bx]
     
+    push ax
+    mov al, dl
+    call Div_By_Byte
+    pop ax
     div dl
     
     ; If the remainder is above 9 then add 0x41h (to turn 
@@ -252,12 +257,15 @@ Mul_By_Byte endp
 ;   [DI] = [SI] / AL
 ;    AH  = [SI] % AL
 Div_By_Byte proc
-    pusha
+    push bx
+    push cx
+    push dx
     
     mov ah, 00h
     mov dx, 00h
-    mov cx, 60h
-
+    mov cx, 060h
+    mov cx, 08h
+    
 DIV_BY_BYTE_LOOP:
     shl dx, 01h
     push ax
@@ -281,7 +289,12 @@ DIV_BY_BYTE_LOOP:
 DIV_BY_BYTE_CONTINUE_LOOP:
     loop DIV_BY_BYTE_LOOP
     
-    popa
+    mov ah, dl
+    
+    pop dx
+    pop cx
+    pop bx
+    
     ret
 Div_By_Byte endp 
 
@@ -291,7 +304,7 @@ Div_By_Byte endp
 ; Output:
 ;   CF -> Indicates the value of the bit at AX index
 ; Description:
-;
+;   Retrieves the value of the bit in the SI array at AX index
 Get_Bit_At proc
     pusha
     
@@ -327,7 +340,7 @@ Get_Bit_At endp
 ;   AX -> Bit index [0 - 95]
 ; Output:
 ; Description:
-;
+;   Sets the bit at index specified by AX in the SI array
 Set_Bit_At proc
     pusha
     
@@ -428,12 +441,11 @@ _begin:
     call Init_Segments  
     
     mov input_b[00h], 0ffh
-    mov input_b[02h], 0ffh
     
     lea di, input_a
     lea si, input_b 
     
-    mov ax, 0ch
+    mov ax, 04h
     
     call Div_By_Byte
      
