@@ -220,17 +220,12 @@ Add_Array endp
 Add_Word_To_Array proc
     pusha
     
-    add [di], ax           
-    adc [di + 02h], 00h
-    adc [di + 03h], 00h
-    adc [di + 04h], 00h
-    adc [di + 05h], 00h
-    adc [di + 06h], 00h
-    adc [di + 07h], 00h
-    adc [di + 08h], 00h
-    adc [di + 09h], 00h
-    adc [di + 0ah], 00h
-    adc [di + 0bh], 00h
+    add word ptr [di + 00h], ax           
+    adc word ptr [di + 02h], 00h
+    adc word ptr [di + 04h], 00h
+    adc word ptr [di + 06h], 00h
+    adc word ptr [di + 08h], 00h
+    adc word ptr [di + 0ah], 00h
     
     popa
     ret
@@ -245,17 +240,12 @@ Add_Word_To_Array endp
 Sub_Word_To_Array proc
     pusha
     
-    sub [di], ax           
-    sbb [di + 02h], 00h
-    sbb [di + 03h], 00h
-    sbb [di + 04h], 00h
-    sbb [di + 05h], 00h
-    sbb [di + 06h], 00h
-    sbb [di + 07h], 00h
-    sbb [di + 08h], 00h
-    sbb [di + 09h], 00h
-    sbb [di + 0ah], 00h
-    sbb [di + 0bh], 00h
+    sub word ptr [di + 00h], ax           
+    sbb word ptr [di + 02h], 00h
+    sbb word ptr [di + 04h], 00h
+    sbb word ptr [di + 06h], 00h
+    sbb word ptr [di + 08h], 00h
+    sbb word ptr [di + 0ah], 00h
     
     popa
     ret
@@ -533,20 +523,14 @@ Rotate_Right_Array proc
     mov cx, ax
     
 ROTATE_RIGHT_ARRAY_LOOP:
-    mov dl, 00h
-    
-    shr [di + 0bh], 01h
-    rcr [di + 0ah], 01h
-    rcr [di + 09h], 01h
-    rcr [di + 08h], 01h
-    rcr [di + 07h], 01h
-    rcr [di + 06h], 01h
-    rcr [di + 05h], 01h
-    rcr [di + 04h], 01h
-    rcr [di + 03h], 01h
-    rcr [di + 02h], 01h
-    rcr [di + 01h], 01h
-    rcr [di + 00h], 01h
+    mov dl, 00h                 
+
+    rcr word ptr [di + 0ah], 01h
+    rcr word ptr [di + 08h], 01h
+    rcr word ptr [di + 06h], 01h
+    rcr word ptr [di + 04h], 01h
+    rcr word ptr [di + 02h], 01h
+    rcr word ptr [di + 00h], 01h
     
     adc dl, 00h
     ror dl, 01h
@@ -573,18 +557,12 @@ Rotate_Left_Array proc
 ROTATE_LEFT_ARRAY_LOOP:
     mov dl, 00h
     
-    shl [di + 00h], 01h
-    rcl [di + 01h], 01h
-    rcl [di + 02h], 01h
-    rcl [di + 03h], 01h
-    rcl [di + 04h], 01h
-    rcl [di + 05h], 01h
-    rcl [di + 06h], 01h
-    rcl [di + 07h], 01h
-    rcl [di + 08h], 01h
-    rcl [di + 09h], 01h
-    rcl [di + 0ah], 01h
-    rcl [di + 0bh], 01h
+    shl word ptr [di + 00h], 01h
+    rcl word ptr [di + 02h], 01h
+    rcl word ptr [di + 04h], 01h
+    rcl word ptr [di + 06h], 01h
+    rcl word ptr [di + 08h], 01h
+    rcl word ptr [di + 0ah], 01h
     
     adc dl, 00h
     or [di + 00h], dl
@@ -598,14 +576,14 @@ Rotate_Left_Array endp
 _begin:
     call Init_Segments      
      
-    lea dx, input_msg
-    mov ah, 09h
-    int 021h
+    ; lea dx, input_msg
+    ; mov ah, 09h
+    ; int 021h
     
-    lea di, input_str
-    lea si, input_a 
-    mov dl, 0ah
-    call Input_Value
+    ; lea di, input_str
+    ; lea si, input_a 
+    ; mov dl, 0ah
+    ; call Input_Value
      
     mov ah, 0x4ch
     int 21h
