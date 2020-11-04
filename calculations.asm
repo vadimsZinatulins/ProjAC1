@@ -8,8 +8,14 @@
                                     
     input_str   db  12 dup(00h), 00h
     
-    input_msg   db  "Introduza um numero: $"
+    input_msg   db  "Introduza um numero $"
     mul_by_10_aux   db  12 dup(00h)
+    
+    line_break_msg      db  0ah, 0dh, "$"
+    
+    input_box_top_msg   db  0dah, 11 dup(0c4h), 0bfh, "$"
+    input_box_mid_msg   db  0b3h, 11 dup(' '), 0b3h, "$"
+    input_box_bot_msg   db  0c0h, 11 dup(0c4h), 0d9h, "$"
 .code
 
 Init_Segments proc
@@ -23,6 +29,15 @@ Init_Segments proc
     ret
 Init_Segments endp
 
+; Input:
+;   [Stack + 00h] -> Cursor limit coordinates
+;   [Stack + 02h] -> Cursor restore page
+; Output:
+; Description
+;   Compares the current cursor column with the column stored in [Stack + 00h], if the 
+;   current column is below stored column then the cursor position will be restored
+;   to the value stored in [Stack + 00h]. The page is used just to make sure the 
+;   cursor stays in same page.
 Input_Limit_Cursor proc
     pusha
     
@@ -60,7 +75,7 @@ Input_Limit_Cursor endp
 ;   SI -> Destination array
 ;   DL -> Base
 ; Output:
-; Description
+; Description:
 Input_Value proc
     pusha
     
@@ -225,6 +240,100 @@ INPUT_VALUE_ACCUM_LOOP:
     
     ret
 Input_Value endp
+
+; Input:
+;   DI -> Destination string
+;   SI -> Destination array
+;   BX -> Propt to display
+;   DL -> Base
+; Output:
+; Description: 
+Pretty_Input proc
+    pusha
+    
+    mov bp, sp
+    
+    ; Prompt user for input
+    push dx
+    
+    ; Jump to line below
+    lea dx, line_break_msg
+    mov ah, 09h
+    int 021h
+    
+    ; Output custom msg
+    lea dx, input_msg
+    mov ah, 09h
+    int 021h
+    
+    ; Get the cursor position
+    mov ah, 03h
+    int 10h
+    
+    push bx
+    push dx
+    
+    ; Go to line above
+    dec dh
+    mov ah, 02h
+    int 010h
+    
+    ; Output top bar
+    lea dx, input_box_top_msg
+    mov ah, 09h
+    int 021h
+    
+    mov bx, [bp - 04h]
+    mov dx, [bp - 06h]
+    
+    ; Go to line bellow
+    inc dh
+    mov ah, 02h
+    int 010h
+    
+    ; Output bot bar
+    lea dx, input_box_bot_msg
+    mov ah, 09h
+    int 021h
+    
+    mov bx, [bp - 04h]
+    mov dx, [bp - 06h]
+    
+    ; Go to back to center
+    mov ah, 02h
+    int 010h
+    
+    ; Output top bar
+    lea dx, input_box_mid_msg
+    mov ah, 09h
+    int 021h
+    
+    mov bx, [bp - 04h]
+    mov dx, [bp - 06h]    
+    
+    inc dl
+    mov ah, 02h
+    int 010h
+    
+    mov dx, [bp - 02h]
+    
+    call Input_Value
+    
+    ; Place cursor at a position that will not damange the result
+    ; on the screen
+    mov bx, [bp - 04h]
+    mov dx, [bp - 06h]
+    add dh, 02h
+    mov dl, 00h
+    mov ah, 02h
+    int 010h
+    
+    ; Clear the stack
+    add sp, 06h
+    
+    popa
+    ret
+Pretty_Input endp
 
 ; Inputs:
 ;   DI -> Address of the destination array of words
@@ -623,20 +732,14 @@ ROTATE_LEFT_ARRAY_LOOP:
 Rotate_Left_Array endp
 
 _begin:
-    call Init_Segments      
-    
-    ; mov input_a[00h], 0ffh
-    ; mov ax, 010h
-    ; call Rotate_Left_Array
-     
-    lea dx, input_msg
-    mov ah, 09h
-    int 021h
+    call Init_Segments
     
     lea di, input_str
-    lea si, input_a 
+    lea si, input_a
+    lea bx, input_msg 
     mov dl, 0ah
-    call Input_Value
+    call Pretty_Input
+    call Pretty_Input
      
     mov ah, 0x4ch
     int 21h
