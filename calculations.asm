@@ -23,6 +23,38 @@ Init_Segments proc
     ret
 Init_Segments endp
 
+Input_Limit_Cursor proc
+    pusha
+    
+    mov bp, sp
+    add bp, 012h
+                          
+    mov bx, [bp + 02h]
+    mov dx, [bp + 00h]
+    
+    push dx
+    push bx
+    
+    ; Get the cursor position
+    mov ah, 03h
+    int 010h
+    
+    pop bx
+    pop cx
+    
+    cmp dl, cl
+    jae INPUT_LIMIT_CURSOR_OK
+    
+    mov dx, cx
+    mov ah, 02h
+    int 010h
+    
+INPUT_LIMIT_CURSOR_OK:
+    
+    popa
+    ret
+Input_Limit_Cursor endp
+
 ; Input:
 ;   DI -> Destination string
 ;   SI -> Destination array
@@ -31,6 +63,20 @@ Init_Segments endp
 ; Description
 Input_Value proc
     pusha
+    
+    ; Store Base in AL
+    mov al, dl        
+    
+    ; Get the cursor position
+    mov ah, 03h
+    int 010h
+    
+    ; Store the cursor information (page in BH, position in DX)
+    push bx
+    push dx
+    
+    ; Restore Base
+    mov dl, al
      
     ; Clear Inputs                   
     mov word ptr [di + 00h], 00h
@@ -78,9 +124,7 @@ INPUT_VALUE_LOOP:
     cmp al, 041h
     jb INPUT_VALUE_INVALID_INPUT
     cmp al, 47h
-    jb INPUT_VALUE_IS_CHAR 
-    
-    jmp INPUT_VALUE_INVALID_INPUT
+    jb INPUT_VALUE_IS_CHAR
     
 INPUT_VALUE_INVALID_INPUT:
     ; Store DX (because it will be used)
@@ -98,6 +142,8 @@ INPUT_VALUE_INVALID_INPUT:
     pop dx
     
 INPUT_VALUE_BACKSPACE:
+    call Input_Limit_Cursor
+    
     ; If BX (input counter) is 0 then don't decrement it 
     cmp bx, 00h
     je INPUT_VALUE_DONT_DEC_BX
@@ -171,6 +217,9 @@ INPUT_VALUE_ACCUM_LOOP:
     pop di
     
     loop INPUT_VALUE_ACCUM_LOOP
+    
+    ; Remove mouse information from stack
+    add sp, 04h                          
     
     popa
     
@@ -525,7 +574,7 @@ Rotate_Right_Array proc
 ROTATE_RIGHT_ARRAY_LOOP:
     mov dl, 00h                 
 
-    rcr word ptr [di + 0ah], 01h
+    shr word ptr [di + 0ah], 01h
     rcr word ptr [di + 08h], 01h
     rcr word ptr [di + 06h], 01h
     rcr word ptr [di + 04h], 01h
@@ -575,15 +624,19 @@ Rotate_Left_Array endp
 
 _begin:
     call Init_Segments      
-     
-    ; lea dx, input_msg
-    ; mov ah, 09h
-    ; int 021h
     
-    ; lea di, input_str
-    ; lea si, input_a 
-    ; mov dl, 0ah
-    ; call Input_Value
+    ; mov input_a[00h], 0ffh
+    ; mov ax, 010h
+    ; call Rotate_Left_Array
+     
+    lea dx, input_msg
+    mov ah, 09h
+    int 021h
+    
+    lea di, input_str
+    lea si, input_a 
+    mov dl, 0ah
+    call Input_Value
      
     mov ah, 0x4ch
     int 21h
