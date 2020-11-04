@@ -3,16 +3,24 @@
 .stack 100h
 
 .data
-    input_a     db  12 dup(00h), 00h
-    input_b     db  12 dup(00h), 00h
-                                    
-    input_str   db  12 dup(00h), 00h
+    ; Division messages
+    div_input_a_msg     db "Dividendo $"
+    div_input_b_msg     db "Divisor   $"
+                      
+    ; General variables
+    input_a             db  12 dup(00h), 00h
+    input_a_str         db  12 dup(00h), 00h
     
-    input_msg   db  "Introduza um numero $"
-    mul_by_10_aux   db  12 dup(00h)
+    input_b             db  12 dup(00h), 00h
+    input_b_str         db  12 dup(00h), 00h
     
+    aux_var_a           db  12 dup(00h)
+    aux_var_b           db  12 dup(00h)
+                       
+    ; Line break message
     line_break_msg      db  0ah, 0dh, "$"
     
+    ; Strings that outlines a box
     input_box_top_msg   db  0dah, 11 dup(0c4h), 0bfh, "$"
     input_box_mid_msg   db  0b3h, 11 dup(' '), 0b3h, "$"
     input_box_bot_msg   db  0c0h, 11 dup(0c4h), 0d9h, "$"
@@ -28,6 +36,59 @@ Init_Segments proc
     popa
     ret
 Init_Segments endp
+
+; Input:
+;   None
+; Output:
+;   None
+; Description:
+;   Performs division algorith as it would be done by hand.
+Division proc
+    pusha
+    
+    ; Clear the result
+    mov word ptr aux_var_a[00h], 00h
+    mov word ptr aux_var_a[02h], 00h
+    mov word ptr aux_var_a[04h], 00h
+    mov word ptr aux_var_a[06h], 00h
+    mov word ptr aux_var_a[08h], 00h
+    mov word ptr aux_var_a[0ah], 00h
+    
+    ; Clear the remainder
+    mov word ptr aux_var_b[00h], 00h
+    mov word ptr aux_var_b[02h], 00h
+    mov word ptr aux_var_b[04h], 00h
+    mov word ptr aux_var_b[06h], 00h
+    mov word ptr aux_var_b[08h], 00h
+    mov word ptr aux_var_b[0ah], 00h
+    
+    ; Propt user for dividend
+    lea di, input_a_str
+    lea si, input_a
+    lea bx, div_input_a_msg 
+    mov dl, 0ah
+    call Pretty_Input
+    
+    ; Propt user for divisor
+    lea di, input_b_str
+    lea si, input_b
+    lea bx, div_input_b_msg 
+    mov dl, 0ah
+    call Pretty_Input
+    
+    ; Get the number of digits in dividend
+    mov cx, 00h
+    mov cl, input_a_str[0ch]
+    
+    ; Loop through all digits in dividend
+DIVISION_LOOP:
+    
+    loop cx
+    
+    
+    popa
+    ret
+Division endp    
 
 ; Input:
 ;   [Stack + 00h] -> Cursor limit coordinates
@@ -262,7 +323,7 @@ Pretty_Input proc
     int 021h
     
     ; Output custom msg
-    lea dx, input_msg
+    mov dx, bx
     mov ah, 09h
     int 021h
     
@@ -445,34 +506,52 @@ Sub_Array endp
 ; Input:
 ;   DI -> Address of the destination array of words
 ; Output:
-; Description:
+; Description: 
+;   Performs shift multiplication. The result is [DI] = [DI] x 10.
+;   Using the following formula: x << 3 + x << 1
 Mul_By_10 proc
     pusha
-                           
-    mov ax, [di + 00h]
-    mov word ptr [mul_by_10_aux + 00h], ax
-    mov ax, [di + 02h]
-    mov word ptr [mul_by_10_aux + 02h], ax
-    mov ax, [di + 04h]
-    mov word ptr [mul_by_10_aux + 04h], ax
-    mov ax, [di + 06h]
-    mov word ptr [mul_by_10_aux + 06h], ax
-    mov ax, [di + 08h]
-    mov word ptr [mul_by_10_aux + 08h], ax
-    mov ax, [di + 0ah]
-    mov word ptr [mul_by_10_aux + 0ah], ax
     
+    mov bp, sp
+                           
+    mov ax, [di + 0ah]   
+    push ax
+    mov ax, [di + 08h]
+    push ax
+    mov ax, [di + 06h]
+    push ax
+    mov ax, [di + 04h]
+    push ax
+    mov ax, [di + 02h]
+    push ax
+    mov ax, [di + 00h]
+    push ax
+    
+    ; Rotate the value in stack to the left (same as x2)
+    shl [bp + 00h], 01h
+    rcl [bp + 02h], 01h
+    rcl [bp + 04h], 01h
+    rcl [bp + 06h], 01h
+    rcl [bp + 08h], 01h
+    rcl [bp + 0ah], 01h
+    
+    ; Rotate value to the left 3x
     mov ax, 03h
     call Rotate_Left_Array
-    
-    push di
-    lea di, mul_by_10_aux
-    mov ax, 01h
-    call Rotate_Left_Array
-    pop di
-    
-    lea si, mul_by_10_aux
-    call Add_Array   
+     
+    ; Add the rotated values 
+    pop ax
+    add word ptr [di + 00h], ax
+    pop ax           
+    adc word ptr [di + 02h], ax
+    pop ax
+    adc word ptr [di + 04h], ax
+    pop ax
+    adc word ptr [di + 06h], ax
+    pop ax
+    adc word ptr [di + 08h], ax
+    pop ax
+    adc word ptr [di + 0ah], ax   
     
     popa
     ret
@@ -734,12 +813,7 @@ Rotate_Left_Array endp
 _begin:
     call Init_Segments
     
-    lea di, input_str
-    lea si, input_a
-    lea bx, input_msg 
-    mov dl, 0ah
-    call Pretty_Input
-    call Pretty_Input
+    call Division
      
     mov ah, 0x4ch
     int 21h
