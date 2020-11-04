@@ -83,7 +83,7 @@ Division proc
     ; Loop through all digits in dividend
 DIVISION_LOOP:
     
-    loop cx
+    loop DIVISION_LOOP
     
     
     popa
@@ -404,27 +404,19 @@ Pretty_Input endp
 ;   [DI] = [DI] + [SI]
 Add_Array proc
     pusha  
-                 
-    mov cx, 02h
-    mov dx, [si]
-    add [di], dx
     
-    pushf
-    
-ADD_ARRAY_LOOP:
-    mov bx, cx
-    mov dx, [si + bx]
-    popf
-    adc [di + bx], dx
-    pushf
-    
-    add cx, 02h
-    cmp cx, 0ah
-    jb ADD_ARRAY_LOOP    
-    popf
-    
-    mov dx, [si + 0ah]
-    adc [di + 0ah], dx
+    mov ax, word ptr [si + 00h]
+    add word ptr [di + 00h], ax
+    mov ax, word ptr [si + 02h]
+    adc word ptr [di + 02h], ax
+    mov ax, word ptr [si + 04h]
+    adc word ptr [di + 04h], ax
+    mov ax, word ptr [si + 06h]
+    adc word ptr [di + 06h], ax
+    mov ax, word ptr [si + 08h]
+    adc word ptr [di + 08h], ax
+    mov ax, word ptr [si + 0ah]
+    adc word ptr [di + 0ah], ax    
     
     popa
     ret
@@ -478,26 +470,18 @@ Sub_Word_To_Array endp
 Sub_Array proc
     pusha
     
-    mov cx, 02h
-    mov dx, [si]
-    sub [di], dx
-    
-    pushf
-    
-SUB_ARRAY_LOOP:
-    mov bx, cx
-    mov dx, [si + bx]
-    popf
-    sbb [di + bx], dx
-    pushf
-    
-    add cx, 02h
-    cmp cx, 0ah
-    jb SUB_ARRAY_LOOP    
-    popf
-    
-    mov dx, [si + 0ah]
-    sbb [di + 0ah], dx
+    mov ax, word ptr [si + 00h]
+    sub word ptr [di + 00h], ax
+    mov ax, word ptr [si + 02h]
+    sbb word ptr [di + 02h], ax
+    mov ax, word ptr [si + 04h]
+    sbb word ptr [di + 04h], ax
+    mov ax, word ptr [si + 06h]
+    sbb word ptr [di + 06h], ax
+    mov ax, word ptr [si + 08h]
+    sbb word ptr [di + 08h], ax
+    mov ax, word ptr [si + 0ah]
+    sbb word ptr [di + 0ah], ax
     
     popa
     ret
