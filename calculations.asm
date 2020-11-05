@@ -82,7 +82,27 @@ Division proc
     
     ; Loop through all digits in dividend
 DIVISION_LOOP:
+    lea di, aux_var_b
+    call Mul_By_10
     
+    mov bh, 00h
+    mov bl, input_a_str[0ch]
+    sub bx, cx
+    mov ah, 00h
+    mov al, input_a_str[bx]
+    lea di, aux_var_b
+    call Add_Word_To_Array
+    
+    lea di, aux_var_b
+    lea si, input_b
+    call Cmp_Array
+    
+    cmp al, 01h
+    jb DIVISION_CONTINUE_LOOP
+    
+    mov ax, 00h        
+    
+DIVISION_CONTINUE_LOOP:    
     loop DIVISION_LOOP
     
     
@@ -495,9 +515,7 @@ Sub_Array endp
 ;   Using the following formula: x << 3 + x << 1
 Mul_By_10 proc
     pusha
-    
-    mov bp, sp
-                           
+                         
     mov ax, [di + 0ah]   
     push ax
     mov ax, [di + 08h]
@@ -510,6 +528,8 @@ Mul_By_10 proc
     push ax
     mov ax, [di + 00h]
     push ax
+    
+    mov bp, sp
     
     ; Rotate the value in stack to the left (same as x2)
     shl [bp + 00h], 01h
@@ -667,6 +687,67 @@ DIV_BY_BYTE_CONTINUE_LOOP:
     ret
 Div_By_Byte endp 
 
+; Input:
+;   DI -> Operand A
+;   SI -> Operand B
+; Output:
+;   AL -> Result
+; Description:
+;   DI > SI => AL = 2
+;   DI = SI => AL = 1
+;   DI < SI => AL = 0
+Cmp_Array proc
+    pusha
+    
+    mov ax, word ptr [di + 0ah]
+    cmp ax, word ptr [si + 0ah]
+    ja CMP_ARRAY_ABOVE
+    jb CMP_ARRAY_BELOW
+    mov ax, word ptr [di + 08h]
+    cmp ax, word ptr [si + 08h]
+    ja CMP_ARRAY_ABOVE
+    jb CMP_ARRAY_BELOW
+    mov ax, word ptr [di + 06h]
+    cmp ax, word ptr [si + 06h]
+    ja CMP_ARRAY_ABOVE
+    jb CMP_ARRAY_BELOW
+    mov ax, word ptr [di + 04h]
+    cmp ax, word ptr [si + 04h]
+    ja CMP_ARRAY_ABOVE
+    jb CMP_ARRAY_BELOW
+    mov ax, word ptr [di + 02h]
+    cmp ax, word ptr [si + 02h]
+    ja CMP_ARRAY_ABOVE
+    jb CMP_ARRAY_BELOW
+    mov ax, word ptr [di + 00h]
+    cmp ax, word ptr [si + 00h]
+    ja CMP_ARRAY_ABOVE
+    jb CMP_ARRAY_BELOW
+    
+    mov al, 01h
+    
+    jmp CMP_ARRAY_END
+    
+CMP_ARRAY_ABOVE:
+    mov al, 02h
+    jmp CMP_ARRAY_END
+    
+CMP_ARRAY_BELOW:    
+    mov al, 00h
+    
+CMP_ARRAY_END:
+    push ax
+    
+    add sp, 02h
+    
+    popa
+    
+    mov bp, sp
+    mov ax, [bp - 012h]
+    
+    ret
+Cmp_Array endp
+
 ; Input: 
 ;   SI -> Address of the siyrce array
 ;   AX -> Bit index [0 - 95]
@@ -796,7 +877,7 @@ Rotate_Left_Array endp
 
 _begin:
     call Init_Segments
-    
+     
     call Division
      
     mov ah, 0x4ch
