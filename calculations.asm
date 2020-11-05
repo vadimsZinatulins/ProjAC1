@@ -142,11 +142,58 @@ DIVISION_INNER_LOOP_EXIT:
     
 DIVISION_CONTINUE_LOOP:    
     loop DIVISION_LOOP
+    
+                     
+    lea si, aux_var_a
+    call Output_Array
+    
+    ;lea si, aux_var_b
+    ;call Output_Array
         
     popa
     
     ret
 Division endp    
+
+; Input:
+;   SI -> Array to print
+; Output:
+; Description:
+Output_Array proc
+    pusha
+    
+    mov cx, 00h
+OUTPUT_ARRAY_LOOP:
+    inc cx
+    
+    mov di, si
+    mov ax, 0ah
+    call Div_By_Byte
+    
+    add ah, 030h
+    
+    push ax
+
+    mov ax, 00h
+    or ax, [SI + 00h]
+    or ax, [SI + 02h]
+    or ax, [SI + 04h]
+    or ax, [SI + 06h]
+    or ax, [SI + 08h]
+    or ax, [SI + 0ah]
+    cmp ax, 00h
+    ja OUTPUT_ARRAY_LOOP
+    
+OUTPUT_ARRAY_LOOP_PRINT:    
+    pop ax
+    mov dl, ah
+    mov ah, 02h
+    int 021h
+    loop OUTPUT_ARRAY_LOOP_PRINT
+    
+    popa
+    ret
+Output_Array endp
 
 ; Input:
 ;   [Stack + 00h] -> Cursor limit coordinates
@@ -676,7 +723,6 @@ Mul_By_Byte endp
         
 ; Input:
 ;   DI -> Address of the destination array of words
-;   SI -> Address of the source array of words
 ;   AL -> Divide value
 ; Output:
 ;   AH -> Remainder
@@ -687,6 +733,31 @@ Div_By_Byte proc
     push bx
     push cx
     push dx
+    push ax
+                      
+    mov ax, word ptr [di + 0ah]
+    push ax
+    mov ax, word ptr [di + 08h]
+    push ax
+    mov ax, word ptr [di + 06h]
+    push ax
+    mov ax, word ptr [di + 04h]
+    push ax
+    mov ax, word ptr [di + 02h]
+    push ax
+    mov ax, word ptr [di + 00h]
+    push ax
+    
+    mov bp, sp
+    
+    mov ax, word ptr [bp + 0ch]
+                               
+    mov word ptr [di + 00h], 00h
+    mov word ptr [di + 02h], 00h
+    mov word ptr [di + 04h], 00h
+    mov word ptr [di + 06h], 00h
+    mov word ptr [di + 08h], 00h
+    mov word ptr [di + 0ah], 00h
     
     mov ah, 00h
     mov dx, 00h
@@ -694,13 +765,31 @@ Div_By_Byte proc
     ;mov cx, 08h
     
 DIV_BY_BYTE_LOOP:
+    mov bl, 00h    
+    shl word ptr [di + 00h], 01h
+    rcl word ptr [di + 02h], 01h
+    rcl word ptr [di + 04h], 01h
+    rcl word ptr [di + 06h], 01h
+    rcl word ptr [di + 08h], 01h
+    rcl word ptr [di + 0ah], 01h    
+    adc bl, 00h
+    or [di + 00h], bl
+    
+    mov bl, 00h
+    shl word ptr [bp + 00h], 01h
+    rcl word ptr [bp + 02h], 01h
+    rcl word ptr [bp + 04h], 01h
+    rcl word ptr [bp + 06h], 01h
+    rcl word ptr [bp + 08h], 01h
+    rcl word ptr [bp + 0ah], 01h    
+    adc bl, 00h
+    or [bp + 00h], bl
+    
     shl dx, 01h
-    push ax
-    mov ax, cx
-    dec ax
-    call Get_Bit_At
-    adc dx, 00h
-    pop ax
+    
+    mov bl, [bp + 00h]
+    and bl, 01h
+    or dl, bl    
     
     cmp dx, ax
     jb DIV_BY_BYTE_CONTINUE_LOOP
@@ -717,6 +806,8 @@ DIV_BY_BYTE_CONTINUE_LOOP:
     loop DIV_BY_BYTE_LOOP
     
     mov ah, dl
+    
+    add sp, 0eh
     
     pop dx
     pop cx
@@ -915,8 +1006,12 @@ Rotate_Left_Array endp
 
 _begin:
     call Init_Segments
-                           
-    call Division
+    
+    mov input_a[00h], 05h
+    lea di, input_a
+    mov al, 0ah
+    call Div_By_Byte                       
+    ; call Division
      
     mov ah, 0x4ch
     int 21h
