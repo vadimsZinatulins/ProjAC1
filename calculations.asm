@@ -16,6 +16,7 @@
     
     aux_var_a           db  12 dup(00h)
     aux_var_b           db  12 dup(00h)
+    aux_var_c           db  12 dup(00h)
                        
     ; Line break message
     line_break_msg      db  0ah, 0dh, "$"
@@ -92,21 +93,58 @@ DIVISION_LOOP:
     mov al, input_a_str[bx]
     lea di, aux_var_b
     call Add_Word_To_Array
+ 
+    push cx
+    mov cx, 0ah
     
-    lea di, aux_var_b
-    lea si, input_b
-    call Cmp_Array
+DIVISION_INNER_LOOP:
+    ; Copy divisor to a temporary variable
+    mov ax, word ptr input_b[00h]
+    mov word ptr aux_var_c[00h], ax
+    mov ax, word ptr input_b[02h]
+    mov word ptr aux_var_c[02h], ax
+    mov ax, word ptr input_b[04h]
+    mov word ptr aux_var_c[04h], ax
+    mov ax, word ptr input_b[06h]
+    mov word ptr aux_var_c[06h], ax
+    mov ax, word ptr input_b[08h]
+    mov word ptr aux_var_c[08h], ax
+    mov ax, word ptr input_b[0ah]
+    mov word ptr aux_var_c[0ah], ax
+    
+    lea di, aux_var_c
+    mov ax, cx
+    dec ax
+    call Mul_By_Byte
+       
+    lea di, aux_var_c
+    lea si, aux_var_b
+    call Cmp_array
     
     cmp al, 01h
-    jb DIVISION_CONTINUE_LOOP
+    jbe DIVISION_INNER_LOOP_EXIT
+    loop DIVISION_INNER_LOOP
+     
+DIVISION_INNER_LOOP_EXIT:
+    lea di, aux_var_b
+    lea si, aux_var_c
+    call Sub_Array
     
-    mov ax, 00h        
+    lea di, aux_var_a
+    call Mul_By_10
+    
+    mov ax, cx
+    dec ax
+    lea di, aux_var_a
+    call Add_Word_To_array
+        
+    pop cx
     
 DIVISION_CONTINUE_LOOP:    
     loop DIVISION_LOOP
-    
-    
+        
     popa
+    
     ret
 Division endp    
 
@@ -532,12 +570,12 @@ Mul_By_10 proc
     mov bp, sp
     
     ; Rotate the value in stack to the left (same as x2)
-    shl [bp + 00h], 01h
-    rcl [bp + 02h], 01h
-    rcl [bp + 04h], 01h
-    rcl [bp + 06h], 01h
-    rcl [bp + 08h], 01h
-    rcl [bp + 0ah], 01h
+    shl word ptr [bp + 00h], 01h
+    rcl word ptr [bp + 02h], 01h
+    rcl word ptr [bp + 04h], 01h
+    rcl word ptr [bp + 06h], 01h
+    rcl word ptr [bp + 08h], 01h
+    rcl word ptr [bp + 0ah], 01h
     
     ; Rotate value to the left 3x
     mov ax, 03h
@@ -877,7 +915,7 @@ Rotate_Left_Array endp
 
 _begin:
     call Init_Segments
-     
+                           
     call Division
      
     mov ah, 0x4ch
