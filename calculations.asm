@@ -6,6 +6,9 @@
     ; Division messages
     div_input_a_msg     db "Dividendo $"
     div_input_b_msg     db "Divisor   $"
+    
+    ; Sqrt message
+    sqrt_input_msg      db  "Numero   $"
                       
     ; General variables
     input_a             db  12 dup(00h), 00h
@@ -147,13 +150,285 @@ DIVISION_CONTINUE_LOOP:
     lea si, aux_var_a
     call Output_Array
     
-    ;lea si, aux_var_b
-    ;call Output_Array
+    lea dx, line_break_msg
+    mov ah, 09h
+    int 21h
+    
+    lea si, aux_var_b
+    call Output_Array
         
     popa
     
     ret
 Division endp    
+
+Sqrt proc
+    pusha
+    
+    ; Clear the result
+    mov word ptr aux_var_a[00h], 00h
+    mov word ptr aux_var_a[02h], 00h
+    mov word ptr aux_var_a[04h], 00h
+    mov word ptr aux_var_a[06h], 00h
+    mov word ptr aux_var_a[08h], 00h
+    mov word ptr aux_var_a[0ah], 00h
+    
+    ; Clear the remainder
+    mov word ptr aux_var_b[00h], 00h
+    mov word ptr aux_var_b[02h], 00h
+    mov word ptr aux_var_b[04h], 00h
+    mov word ptr aux_var_b[06h], 00h
+    mov word ptr aux_var_b[08h], 00h
+    mov word ptr aux_var_b[0ah], 00h
+    
+    ; Propt user for dividend
+    lea di, input_a_str
+    lea si, input_a
+    lea bx, sqrt_input_msg 
+    mov dl, 0ah
+    call Pretty_Input
+    
+    mov ah, 00h
+    mov al, input_a_str[0ch]
+    mov bl, 02h
+    div bl
+    
+    cmp ah, 00h
+    je SQRT_OK
+    
+    ; Shift entire array to the left and place 00h as first digit
+    mov bx, word ptr input_a_str[09h]
+    mov word ptr input_a_str[0ah], bx
+    mov bx, word ptr input_a_str[07h]
+    mov word ptr input_a_str[08h], bx
+    mov bx, word ptr input_a_str[05h]
+    mov word ptr input_a_str[06h], bx
+    mov bx, word ptr input_a_str[03h]
+    mov word ptr input_a_str[04h], bx
+    mov bx, word ptr input_a_str[01h]
+    mov word ptr input_a_str[02h], bx
+    mov bx, word ptr input_a_str[00h]
+    mov bh, bl
+    mov bl, 00h
+    mov word ptr input_a_str[00h], bx     
+    
+    inc input_a_str[0ch]
+    
+SQRT_OK: 
+    mov ah, 00h
+    mov al, input_a_str[0ch]
+    mov bl, 02h
+    div bl 
+    push ax
+    mov ch, 00h
+    mov cl, al
+    
+SQRT_LOOP:
+    mov bp, sp
+    
+    mov al, 064h
+    lea di, aux_var_b
+    call Mul_By_Byte
+    
+    mov ax, [bp + 00h]
+    mov bh, 00h
+    mov bl, al
+    sub bl, cl
+    shl bl, 01h
+    
+    mov ah, 00h
+    mov al, input_a_str[bx + 00h]
+    mov dl, 0ah
+    mul dl
+    mov dh, 00h
+    mov dl, input_a_str[bx + 01h]
+    add ax, dx
+    
+    lea di, aux_var_b
+    call Add_Word_To_Array
+    
+    push cx
+    
+    mov cl, 0ah
+    
+    ; while (cl >= 1)
+SQRT_INNER_LOOP:
+    dec cl
+    ; temp = result        
+    mov ax, word ptr aux_var_a[00h]
+    mov word ptr aux_var_c[00h], ax
+    mov ax, word ptr aux_var_a[02h]
+    mov word ptr aux_var_c[02h], ax
+    mov ax, word ptr aux_var_a[04h]
+    mov word ptr aux_var_c[04h], ax
+    mov ax, word ptr aux_var_a[06h]
+    mov word ptr aux_var_c[06h], ax
+    mov ax, word ptr aux_var_a[08h]
+    mov word ptr aux_var_c[08h], ax
+    mov ax, word ptr aux_var_a[0ah]
+    mov word ptr aux_var_c[0ah], ax
+    
+    ; temp = temp x 20
+    mov ax, 014h        
+    lea di, aux_var_c   
+    call Mul_By_Byte    
+    
+    ; temp = temp + cl
+    mov al, cl
+    call Add_Word_To_Array
+    
+    ; temp = temp x cl
+    call Mul_By_Byte
+    
+    ; if(temp < remainder) {
+    ;   break  
+    ; }
+    lea si, aux_var_b
+    call Cmp_Array
+    cmp al, 01h
+    jbe SQRT_INNER_LOOP_EXIT
+    
+    inc cl
+    loop SQRT_INNER_LOOP
+    
+SQRT_INNER_LOOP_EXIT:
+    ; remainder = remainder - temp
+    lea di, aux_var_b
+    lea si, aux_var_c
+    call Sub_Array
+    
+    ; result = result x 10
+    lea di, aux_var_a
+    call Mul_By_10
+    
+    ; result = result + cl
+    mov ax, cx
+    call Add_Word_To_Array
+    
+    pop cx
+    
+    loop SQRT_LOOP
+    
+    ; input_b = result
+    mov ax, word ptr aux_var_a[00h]
+    mov word ptr input_b[00h], ax
+    mov ax, word ptr aux_var_a[02h]
+    mov word ptr input_b[02h], ax
+    mov ax, word ptr aux_var_a[04h]
+    mov word ptr input_b[04h], ax
+    mov ax, word ptr aux_var_a[06h]
+    mov word ptr input_b[06h], ax
+    mov ax, word ptr aux_var_a[08h]
+    mov word ptr input_b[08h], ax
+    mov ax, word ptr aux_var_a[0ah]
+    mov word ptr input_b[0ah], ax
+    
+    ; print input_b
+    lea si, input_b
+    call Output_Array
+    
+    ; Since print damages the input_b, it must be copied again
+    mov ax, word ptr aux_var_a[00h]
+    mov word ptr input_b[00h], ax
+    mov ax, word ptr aux_var_a[02h]
+    mov word ptr input_b[02h], ax
+    mov ax, word ptr aux_var_a[04h]
+    mov word ptr input_b[04h], ax
+    mov ax, word ptr aux_var_a[06h]
+    mov word ptr input_b[06h], ax
+    mov ax, word ptr aux_var_a[08h]
+    mov word ptr input_b[08h], ax
+    mov ax, word ptr aux_var_a[0ah]
+    mov word ptr input_b[0ah], ax
+    
+    ; input_b = input_b x 100
+    lea di, input_b
+    mov ax, 064h
+    call Mul_By_Byte
+        
+    mov cx, 02h
+SQRT_DECIMAL_LOOP:
+    mov bp, sp
+    
+    mov al, 064h
+    lea di, aux_var_b
+    call Mul_By_Byte
+    
+    push cx    
+    mov cl, 0ah
+    
+SQRT_DECIMAL_INNER_LOOP:
+    dec cl
+    
+    ; temp = result        
+    mov ax, word ptr aux_var_a[00h]
+    mov word ptr aux_var_c[00h], ax
+    mov ax, word ptr aux_var_a[02h]
+    mov word ptr aux_var_c[02h], ax
+    mov ax, word ptr aux_var_a[04h]
+    mov word ptr aux_var_c[04h], ax
+    mov ax, word ptr aux_var_a[06h]
+    mov word ptr aux_var_c[06h], ax
+    mov ax, word ptr aux_var_a[08h]
+    mov word ptr aux_var_c[08h], ax
+    mov ax, word ptr aux_var_a[0ah]
+    mov word ptr aux_var_c[0ah], ax
+    
+    ; temp = temp x 20
+    mov ax, 014h        
+    lea di, aux_var_c   
+    call Mul_By_Byte    
+    
+    ; temp = temp + cl
+    mov al, cl
+    call Add_Word_To_Array
+    
+    ; temp = temp x cl
+    call Mul_By_Byte
+    
+    ; if(temp < remainder) {
+    ;   break  
+    ; }
+    lea si, aux_var_b
+    call Cmp_Array
+    cmp al, 01h
+    jbe SQRT_DECIMAL_INNER_LOOP_EXIT
+    
+    inc cl
+    loop SQRT_DECIMAL_INNER_LOOP
+
+SQRT_DECIMAL_INNER_LOOP_EXIT:
+    ; remainder = remainder - temp
+    lea di, aux_var_b
+    lea si, aux_var_c
+    call Sub_Array
+    
+    ; result = result x 10
+    lea di, aux_var_a
+    call Mul_By_10
+    
+    ; result = result + cl
+    mov ax, cx
+    call Add_Word_To_Array
+        
+    pop cx
+    loop SQRT_DECIMAL_LOOP
+    
+    lea di, aux_var_a
+    lea si, input_b
+    call Sub_Array
+    
+    mov dl, 02eh
+    mov ah, 02h
+    int 21h
+    
+    lea si, aux_var_a
+    call Output_Array
+    
+    pop ax
+    popa
+    ret
+Sqrt endp
 
 ; Input:
 ;   SI -> Array to print
@@ -163,6 +438,22 @@ Output_Array proc
     pusha
     
     mov cx, 00h
+                               
+    mov ax, word ptr [SI + 00h]
+    or ax, word ptr [SI + 02h]
+    or ax, word ptr [SI + 04h]
+    or ax, word ptr [SI + 06h]
+    or ax, word ptr [SI + 08h]
+    or ax, word ptr [SI + 0ah]
+    
+    cmp ax, 00h
+    jne OUTPUT_ARRAY_LOOP
+    
+    mov dl, 030h
+    mov ah, 02h
+    int 21h
+    jmp OUTPUT_ARRAY_END
+    
 OUTPUT_ARRAY_LOOP:
     inc cx
     
@@ -190,6 +481,8 @@ OUTPUT_ARRAY_LOOP_PRINT:
     mov ah, 02h
     int 021h
     loop OUTPUT_ARRAY_LOOP_PRINT
+    
+OUTPUT_ARRAY_END:
     
     popa
     ret
@@ -764,17 +1057,7 @@ Div_By_Byte proc
     mov cx, 060h
     ;mov cx, 08h
     
-DIV_BY_BYTE_LOOP:
-    mov bl, 00h    
-    shl word ptr [di + 00h], 01h
-    rcl word ptr [di + 02h], 01h
-    rcl word ptr [di + 04h], 01h
-    rcl word ptr [di + 06h], 01h
-    rcl word ptr [di + 08h], 01h
-    rcl word ptr [di + 0ah], 01h    
-    adc bl, 00h
-    or [di + 00h], bl
-    
+DIV_BY_BYTE_LOOP:    
     mov bl, 00h
     shl word ptr [bp + 00h], 01h
     rcl word ptr [bp + 02h], 01h
@@ -1007,11 +1290,7 @@ Rotate_Left_Array endp
 _begin:
     call Init_Segments
     
-    mov input_a[00h], 05h
-    lea di, input_a
-    mov al, 0ah
-    call Div_By_Byte                       
-    ; call Division
+    call Sqrt
      
     mov ah, 0x4ch
     int 21h
