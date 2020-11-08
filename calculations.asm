@@ -11,10 +11,14 @@
     sqrt_input_msg      db  "Numero   $"
     
     ; Conversion message
-    conv_intro          db  "0 -> Base 16 (valor por defeito)", 0ah, 0dh, "1 -> Base 10", 0ah, 0dh, "2 -> Base 8", 0ah, 0dh, "$"
+    conv_intro          db  "0 -> Base 16 (valor por defeito)", 0ah, 0dh, "1 -> Base 10", 0ah, 0dh, "2 -> Base 8", 0ah, 0dh, "3 -> Base 2", 0ah, 0dh, "$"
     conv_input_1_msg    db  "Introduza base inicial $"
     conv_input_2_msg    db  "Introduza base final   $"
     conv_input_3_msg    db  "Introduza o numero     $"
+    conv_bases          db  0fh, 0ah, 08h, 02h
+    conv_src_base       db  00h
+    conv_dst_base       db  00h
+    conv_table_file     db  "table.txt", 0
                       
     ; General variables
     input_a             db  12 dup(00h), 00h
@@ -446,29 +450,59 @@ Conversion proc
     mov ah, 09h
     int 21h
     
-    ; Propt user for dividend
+    ; Propt user for source base input
     lea di, input_a_str
     lea si, input_a
     lea bx, conv_input_1_msg
-    mov dl, 03h
+    mov dl, 04h
     mov dh, 01h
     call Pretty_Input
+    mov al, input_a[00h]
+    mov conv_src_base, al
     
-    ; Propt user for dividend
+    ; Propt user for destination base input
     lea di, input_a_str
     lea si, input_a
     lea bx, conv_input_2_msg
-    mov dl, 03h
+    mov dl, 04h
     mov dh, 01h
     call Pretty_Input
+    mov al, input_a[00h]
+    mov conv_dst_base, al
     
-    ; Propt user for dividend
+    ; Propt user for number to convert
     lea di, input_a_str
     lea si, input_a
     lea bx, conv_input_3_msg
     mov dl, 0ah
     mov dh, 0ah
     call Pretty_Input
+    
+CONVERSION_LOOP:
+    mov bx, conv_dst_base
+     
+    mov ax, word ptr input_a[00h]
+    or ax, word ptr input_a[02h]
+    or ax, word ptr input_a[04h]
+    or ax, word ptr input_a[06h]
+    or ax, word ptr input_a[08h]
+    or ax, word ptr input_a[0ah]
+    cmp ax, 00h
+    jne CONVERSION_LOOP 
+    
+    
+    ; Open file
+    lea dx, conv_table_file
+    mov al, 00h
+    mov ah, 03dh
+    int 21h
+    
+    
+    
+    ; close file
+    mov bx, ax
+    mov ah, 03eh
+    int 21h
     
     popa
     ret
