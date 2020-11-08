@@ -9,6 +9,12 @@
     
     ; Sqrt message
     sqrt_input_msg      db  "Numero   $"
+    
+    ; Conversion message
+    conv_intro          db  "0 -> Base 16 (valor por defeito)", 0ah, 0dh, "1 -> Base 10", 0ah, 0dh, "2 -> Base 8", 0ah, 0dh, "$"
+    conv_input_1_msg    db  "Introduza base inicial $"
+    conv_input_2_msg    db  "Introduza base final   $"
+    conv_input_3_msg    db  "Introduza o numero     $"
                       
     ; General variables
     input_a             db  12 dup(00h), 00h
@@ -71,6 +77,7 @@ Division proc
     lea si, input_a
     lea bx, div_input_a_msg 
     mov dl, 0ah
+    mov dh, 0ah
     call Pretty_Input
     
     ; Propt user for divisor
@@ -78,6 +85,7 @@ Division proc
     lea si, input_b
     lea bx, div_input_b_msg 
     mov dl, 0ah
+    mov dh, 0ah
     call Pretty_Input
     
     ; Get the number of digits in dividend
@@ -186,6 +194,7 @@ Sqrt proc
     lea si, input_a
     lea bx, sqrt_input_msg 
     mov dl, 0ah
+    mov dh, 0ah
     call Pretty_Input
     
     mov ah, 00h
@@ -430,6 +439,41 @@ SQRT_DECIMAL_INNER_LOOP_EXIT:
     ret
 Sqrt endp
 
+Conversion proc
+    pusha
+    
+    lea dx, conv_intro
+    mov ah, 09h
+    int 21h
+    
+    ; Propt user for dividend
+    lea di, input_a_str
+    lea si, input_a
+    lea bx, conv_input_1_msg
+    mov dl, 03h
+    mov dh, 01h
+    call Pretty_Input
+    
+    ; Propt user for dividend
+    lea di, input_a_str
+    lea si, input_a
+    lea bx, conv_input_2_msg
+    mov dl, 03h
+    mov dh, 01h
+    call Pretty_Input
+    
+    ; Propt user for dividend
+    lea di, input_a_str
+    lea si, input_a
+    lea bx, conv_input_3_msg
+    mov dl, 0ah
+    mov dh, 0ah
+    call Pretty_Input
+    
+    popa
+    ret
+Conversion endp
+
 ; Input:
 ;   SI -> Array to print
 ; Output:
@@ -537,9 +581,8 @@ Input_Limit_Cursor endp
 ; Description:
 Input_Value proc
     pusha
-    
-    ; Store Base in AL
-    mov al, dl        
+         
+    mov bp, sp
     
     ; Get the cursor position
     mov ah, 03h
@@ -549,8 +592,8 @@ Input_Value proc
     push bx
     push dx
     
-    ; Restore Base
-    mov dl, al
+    ; Restore DX from stack
+    mov dx, [bp + 0ah]
      
     ; Clear Inputs                   
     mov word ptr [di + 00h], 00h
@@ -582,7 +625,7 @@ INPUT_VALUE_LOOP:
     je INPUT_VALUE_BACKSPACE
     
     ; Make sure input is no longer than 10 digits
-    cmp bx, 0ah
+    cmp bl, dh
     jae INPUT_VALUE_INVALID_INPUT 
     
     ; Check if it is a valid digit (0 - 1)
@@ -670,6 +713,9 @@ INPUT_VALUE_END:
     ; Store the number of inputs
     mov [di + 0ch], bl
     
+    cmp bx, 00h
+    jz INPUT_VALUE_EMPTY
+    
     mov cx, bx
 INPUT_VALUE_ACCUM_LOOP:
     mov bx, 00h
@@ -692,6 +738,7 @@ INPUT_VALUE_ACCUM_LOOP:
     
     loop INPUT_VALUE_ACCUM_LOOP
     
+INPUT_VALUE_EMPTY:
     ; Remove mouse information from stack
     add sp, 04h                          
     
@@ -704,6 +751,7 @@ Input_Value endp
 ;   DI -> Destination string
 ;   SI -> Destination array
 ;   BX -> Propt to display
+;   DH -> Max. number of digits
 ;   DL -> Base
 ; Output:
 ; Description: 
@@ -1290,7 +1338,7 @@ Rotate_Left_Array endp
 _begin:
     call Init_Segments
     
-    call Sqrt
+    call Conversion
      
     mov ah, 0x4ch
     int 21h
