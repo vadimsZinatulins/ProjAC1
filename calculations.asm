@@ -3,9 +3,15 @@
 .stack 100h
 
 .data
+    ; Main menu messages
+    intro_msg           db  "Escolha um algoritmo:", 0ah, 0dh, "0 -> Divisao (valor por defeito)", 0ah, 0dh, "1 -> Raiz quadrada", 0ah, 0dh, "2 -> Conversao", 0ah, 0dh, "3 -> Sair", 0ah, 0dh, "$"
+    intro_opt_msg       db  "Opcao     $"
+    
     ; Division messages
-    div_input_a_msg     db "Dividendo $"
-    div_input_b_msg     db "Divisor   $"
+    div_input_a_msg     db  "Dividendo $"
+    div_input_b_msg     db  "Divisor   $"  
+    div_output_a_msg    db  "Resultado e $"
+    div_output_b_msg    db  " e resto e $"
     
     ; Sqrt message
     sqrt_input_msg      db  "Numero   $"
@@ -30,8 +36,7 @@
     aux_var_a           db  12 dup(00h)
     aux_var_b           db  12 dup(00h)
     aux_var_c           db  12 dup(00h)
-    
-    intro_msg           db  "Escolha um algoritmo:", 0ah, 0dh, "0 -> Divisao (valor por defeito)", 0ah, 0dh, "1 -> Raiz quadrada", 0ah, 0dh, "2 -> Conversao", 0ah, 0dh, "3 -> Sair", 0ah, 0dh, "$"
+        
     ; Line break message
     line_break_msg      db  0ah, 0dh, "$"
     
@@ -159,16 +164,23 @@ DIVISION_INNER_LOOP_EXIT:
 DIVISION_CONTINUE_LOOP:    
     loop DIVISION_LOOP
     
-                     
+    lea dx, div_output_a_msg
+    mov ah, 09h
+    int 021h
+    
     lea si, aux_var_a
+    call Output_Array
+    
+    lea dx, div_output_b_msg
+    mov ah, 09h
+    int 021h
+    
+    lea si, aux_var_b
     call Output_Array
     
     lea dx, line_break_msg
     mov ah, 09h
     int 21h
-    
-    lea si, aux_var_b
-    call Output_Array
         
     popa
     
@@ -1427,11 +1439,14 @@ Rotate_Left_Array endp
 
 _begin:
     call Init_Segments
-          
-    ; Propt user for divisor
+    
+    lea dx, intro_msg
+    mov ah, 09h
+    int 21h
+      
     lea di, input_a_str
     lea si, input_a
-    lea bx, intro_msg 
+    lea bx, intro_opt_msg 
     mov dl, 04h
     mov dh, 01h
     call Pretty_Input
