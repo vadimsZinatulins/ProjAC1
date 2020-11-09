@@ -15,7 +15,7 @@
     conv_input_1_msg    db  "Introduza base inicial $"
     conv_input_2_msg    db  "Introduza base final   $"
     conv_input_3_msg    db  "Introduza o numero     $"
-    conv_bases          db  0fh, 0ah, 08h, 02h
+    conv_bases          db  10h, 0ah, 08h, 02h
     conv_src_base       db  00h
     conv_dst_base       db  00h
     conv_table_file     db  "table.txt", 0
@@ -471,33 +471,88 @@ Conversion proc
     mov conv_dst_base, al
     
     ; Propt user for number to convert
+    mov bh, 00h
+    mov bl, conv_src_base
+    mov dl, conv_bases[bx]
     lea di, input_a_str
     lea si, input_a
     lea bx, conv_input_3_msg
-    mov dl, 0ah
     mov dh, 0ah
     call Pretty_Input
     
+    mov cx, 00h
 CONVERSION_LOOP:
-    mov bx, conv_dst_base
-     
+    ; intput_a = input_a / src_base
+    mov bh, 00h
+    mov bl, conv_dst_base
+    mov al, conv_bases[bx]
+    lea di, input_a
+    call Div_By_Byte
+    
+    inc cl
+    
+    ; Store AH (remainder) in the stack
+    push ax
+    
+    ; Check if input_a is no zero 
     mov ax, word ptr input_a[00h]
     or ax, word ptr input_a[02h]
     or ax, word ptr input_a[04h]
     or ax, word ptr input_a[06h]
     or ax, word ptr input_a[08h]
-    or ax, word ptr input_a[0ah]
+    or ax, word ptr input_a[0ah] 
+    
+    ; While input_a is not zero jump back
     cmp ax, 00h
     jne CONVERSION_LOOP 
-    
-    
+        
     ; Open file
     lea dx, conv_table_file
     mov al, 00h
     mov ah, 03dh
     int 21h
     
+    ; Store the file handle into BX
+    mov bx, ax
+CONVERSION_SECOND_LOOP:    
+    ; Get the number from stack and move it to DL
+    pop dx
+    mov dl, dh
+    mov dh, 00h
     
+    ; AL = 4 x DL
+    mov al, 06h
+    mul dl
+    
+    ; Store the CX in the stack
+    push cx
+    
+    ; Seek index = CX:DX
+    ; DL = AL + BaseIndex
+    mov dl, al
+    add dl, conv_dst_base
+    ; CX = 00h 
+    mov cx, 00h
+    ; AL is set to 0 so that origin of seek is the beginning of the file         
+    mov al, 00h
+    ; Set current file position
+    mov ah, 042h
+    int 21h                          
+    
+    ; Read 1 byte from the file            
+    mov cx, 01h
+    lea dx, input_a_str
+    mov ah, 03fh
+    int 21h
+    
+    mov dl, input_a_str[00h]
+    mov ah, 02h
+    int 021h
+    
+    ; Retrive old CX value from stack
+    pop cx
+    
+    loop CONVERSION_SECOND_LOOP
     
     ; close file
     mov bx, ax
@@ -669,7 +724,7 @@ INPUT_VALUE_LOOP:
     jb INPUT_VALUE_IS_DIGIT
     
     ; Convert to lowercase
-    xor al, 040h
+    xor al, 020h
     
     ; Check if input is a valid character (A - F)
     cmp al, 041h
@@ -721,8 +776,8 @@ INPUT_VALUE_DONT_DEC_BX:
     jmp INPUT_VALUE_LOOP
     
 INPUT_VALUE_IS_CHAR:
-    ; Input is a character (A - F) so remove 41h from it to get real value
-    sub al, 041h
+    ; Input is a character (A - F) so remove 37h from it to get real value
+    sub al, 037h
     jmp INPUT_VALUE_CONTINUE
     
 INPUT_VALUE_IS_DIGIT:
