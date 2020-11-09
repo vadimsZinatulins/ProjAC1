@@ -2,24 +2,20 @@
 
 .stack 100h
 
-.data
-    ; Main menu messages
-    intro_msg           db  "Escolha um algoritmo:", 0ah, 0dh, "0 -> Divisao (valor por defeito)", 0ah, 0dh, "1 -> Raiz quadrada", 0ah, 0dh, "2 -> Conversao", 0ah, 0dh, "3 -> Sair", 0ah, 0dh, "$"
-    intro_opt_msg       db  "Op", 087h, "ao     $"
+.data 
+    conv_input_1_msg    db  "Introduza base inicial $"
+    conv_input_2_msg    db  "Introduza base final   $"
+    intro_opt_msg       db  "Op", 087h, "ao         $"
+    div_input_a_msg     db  "Dividendo              $"
+    div_input_b_msg     db  "Divisor                $"
+    sqrt_input_msg      db  "N", 0a3h, "mero        $"
     
-    ; Division messages
-    div_input_a_msg     db  "Dividendo $"
-    div_input_b_msg     db  "Divisor   $"  
+    intro_msg           db  "Escolha um algoritmo:", 0ah, 0dh, "0 -> Divisao (valor por defeito)", 0ah, 0dh, "1 -> Raiz quadrada", 0ah, 0dh, "2 -> Conversao", 0ah, 0dh, "3 -> Sair", 0ah, 0dh, "$"
+    conv_intro          db  "0 -> Base 16 (valor por defeito)", 0ah, 0dh, "1 -> Base 10", 0ah, 0dh, "2 -> Base 8", 0ah, 0dh, "3 -> Base 2", 0ah, 0dh, "$"
+      
     div_output_a_msg    db  "Resultado ", 082h," $"
     div_output_b_msg    db  " e resto ", 082h, " $"
     
-    ; Sqrt message
-    sqrt_input_msg      db  "N", 0a3h, "mero   $"
-    
-    ; Conversion message
-    conv_intro          db  "0 -> Base 16 (valor por defeito)", 0ah, 0dh, "1 -> Base 10", 0ah, 0dh, "2 -> Base 8", 0ah, 0dh, "3 -> Base 2", 0ah, 0dh, "$"
-    conv_input_1_msg    db  "Introduza base inicial $"
-    conv_input_2_msg    db  "Introduza base final   $"
     conv_input_3_msg    db  "Introduza o n", 0a3h, "mero     $"
     conv_bases          db  10h, 0ah, 08h, 02h
     conv_src_base       db  00h
@@ -45,6 +41,8 @@
     input_box_mid_msg   db  0b3h, 11 dup(' '), 0b3h, "$"
     input_box_bot_msg   db  0c0h, 11 dup(0c4h), 0d9h, "$"
     
+    input_to_continue_msg db "Prima qualquer botao para continuar...$"
+    
     clear_line          db 80 dup(' '), "$"
 .code
 
@@ -62,6 +60,11 @@ Init_Segments endp
 Clear_Screen proc
     pusha
     
+    mov dx, 00h
+    mov bh, 00h
+    mov ah, 02h
+    int 010h
+    
     mov cx, 019h
     lea dx, clear_line
     mov ah, 09h
@@ -78,6 +81,19 @@ CLEAR_SCREEN_LOOP:
     ret
 Clear_Screen endp
 
+Input_To_Continue proc
+    pusha
+    
+    lea dx, input_to_continue_msg
+    mov ah, 09h
+    int 021h
+    
+    mov ah, 01h
+    int 021h
+    
+    popa
+    ret
+Input_To_Continue endp
 ; Input:
 ;   None
 ; Output:
@@ -205,6 +221,8 @@ DIVISION_CONTINUE_LOOP:
     mov ah, 09h
     int 21h
     int 21h
+    
+    call Input_To_Continue
         
     popa
     
@@ -486,6 +504,8 @@ SQRT_DECIMAL_INNER_LOOP_EXIT:
     int 21h
     int 21h
     
+    call Input_To_Continue
+    
     pop ax
     popa
     ret
@@ -618,6 +638,8 @@ CONVERSION_SECOND_LOOP:
     mov ah, 09h
     int 21h
     int 21h
+    
+    call Input_To_Continue
     
     popa
     ret
@@ -922,6 +944,7 @@ Pretty_Input proc
     mov ah, 09h
     int 021h
     
+    mov bh, 00h
     ; Get the cursor position
     mov ah, 03h
     int 10h
