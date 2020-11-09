@@ -5,22 +5,22 @@
 .data
     ; Main menu messages
     intro_msg           db  "Escolha um algoritmo:", 0ah, 0dh, "0 -> Divisao (valor por defeito)", 0ah, 0dh, "1 -> Raiz quadrada", 0ah, 0dh, "2 -> Conversao", 0ah, 0dh, "3 -> Sair", 0ah, 0dh, "$"
-    intro_opt_msg       db  "Opcao     $"
+    intro_opt_msg       db  "Op", 087h, "ao     $"
     
     ; Division messages
     div_input_a_msg     db  "Dividendo $"
     div_input_b_msg     db  "Divisor   $"  
-    div_output_a_msg    db  "Resultado e $"
-    div_output_b_msg    db  " e resto e $"
+    div_output_a_msg    db  "Resultado ", 082h," $"
+    div_output_b_msg    db  " e resto ", 082h, " $"
     
     ; Sqrt message
-    sqrt_input_msg      db  "Numero   $"
+    sqrt_input_msg      db  "N", 0a3, "mero   $"
     
     ; Conversion message
     conv_intro          db  "0 -> Base 16 (valor por defeito)", 0ah, 0dh, "1 -> Base 10", 0ah, 0dh, "2 -> Base 8", 0ah, 0dh, "3 -> Base 2", 0ah, 0dh, "$"
     conv_input_1_msg    db  "Introduza base inicial $"
     conv_input_2_msg    db  "Introduza base final   $"
-    conv_input_3_msg    db  "Introduza o numero     $"
+    conv_input_3_msg    db  "Introduza o n", 0a3h, "mero     $"
     conv_bases          db  10h, 0ah, 08h, 02h
     conv_src_base       db  00h
     conv_dst_base       db  00h
