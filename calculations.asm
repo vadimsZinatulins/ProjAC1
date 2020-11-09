@@ -30,7 +30,8 @@
     aux_var_a           db  12 dup(00h)
     aux_var_b           db  12 dup(00h)
     aux_var_c           db  12 dup(00h)
-                       
+    
+    intro_msg           db  "Escolha um algoritmo:", 0ah, 0dh, "0 -> Divisao (valor por defeito)", 0ah, 0dh, "1 -> Raiz quadrada", 0ah, 0dh, "2 -> Conversao", 0ah, 0dh, "3 -> Sair", 0ah, 0dh, "$"
     ; Line break message
     line_break_msg      db  0ah, 0dh, "$"
     
@@ -1426,9 +1427,35 @@ Rotate_Left_Array endp
 
 _begin:
     call Init_Segments
+          
+    ; Propt user for divisor
+    lea di, input_a_str
+    lea si, input_a
+    lea bx, intro_msg 
+    mov dl, 04h
+    mov dh, 01h
+    call Pretty_Input
     
+    mov al, input_a[00h]
+    cmp al, 03h
+    je EXIT
+    cmp al, 02h
+    je DO_CONVERSION_ALG
+    cmp al, 01h
+    je DO_SQRT_ALG 
+
+    call Division
+    jmp _begin
+    
+DO_SQRT_ALG:
+    call Sqrt
+    jmp _begin
+    
+DO_CONVERSION_ALG:
     call Conversion
-     
+    jmp _begin
+    
+EXIT:
     mov ah, 0x4ch
     int 21h
 end _begin
