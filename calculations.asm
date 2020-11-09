@@ -14,7 +14,7 @@
     div_output_b_msg    db  " e resto ", 082h, " $"
     
     ; Sqrt message
-    sqrt_input_msg      db  "N", 0a3, "mero   $"
+    sqrt_input_msg      db  "N", 0a3h, "mero   $"
     
     ; Conversion message
     conv_intro          db  "0 -> Base 16 (valor por defeito)", 0ah, 0dh, "1 -> Base 10", 0ah, 0dh, "2 -> Base 8", 0ah, 0dh, "3 -> Base 2", 0ah, 0dh, "$"
@@ -44,6 +44,8 @@
     input_box_top_msg   db  0dah, 11 dup(0c4h), 0bfh, "$"
     input_box_mid_msg   db  0b3h, 11 dup(' '), 0b3h, "$"
     input_box_bot_msg   db  0c0h, 11 dup(0c4h), 0d9h, "$"
+    
+    clear_line          db 80 dup(' '), "$"
 .code
 
 Init_Segments proc
@@ -57,6 +59,25 @@ Init_Segments proc
     ret
 Init_Segments endp
 
+Clear_Screen proc
+    pusha
+    
+    mov cx, 019h
+    lea dx, clear_line
+    mov ah, 09h
+CLEAR_SCREEN_LOOP:
+    int 021h
+    loop CLEAR_SCREEN_LOOP
+    
+    mov dx, 00h
+    mov bh, 00h
+    mov ah, 02h
+    int 010h
+    
+    popa
+    ret
+Clear_Screen endp
+
 ; Input:
 ;   None
 ; Output:
@@ -65,6 +86,8 @@ Init_Segments endp
 ;   Performs division algorith as it would be done by hand.
 Division proc
     pusha
+    
+    call Clear_Screen
     
     ; Clear the result
     mov word ptr aux_var_a[00h], 00h
@@ -181,6 +204,7 @@ DIVISION_CONTINUE_LOOP:
     lea dx, line_break_msg
     mov ah, 09h
     int 21h
+    int 21h
         
     popa
     
@@ -189,6 +213,8 @@ Division endp
 
 Sqrt proc
     pusha
+    
+    call Clear_Screen
     
     ; Clear the result
     mov word ptr aux_var_a[00h], 00h
@@ -349,6 +375,10 @@ SQRT_INNER_LOOP_EXIT:
     mov ax, word ptr aux_var_a[0ah]
     mov word ptr input_b[0ah], ax
     
+    lea dx, div_output_a_msg
+    mov ah, 09h
+    int 021h
+    
     ; print input_b
     lea si, input_b
     call Output_Array
@@ -451,6 +481,11 @@ SQRT_DECIMAL_INNER_LOOP_EXIT:
     lea si, aux_var_a
     call Output_Array
     
+    lea dx, line_break_msg
+    mov ah, 09h
+    int 21h
+    int 21h
+    
     pop ax
     popa
     ret
@@ -458,6 +493,8 @@ Sqrt endp
 
 Conversion proc
     pusha
+    
+    call Clear_Screen
     
     lea dx, conv_intro
     mov ah, 09h
@@ -518,6 +555,11 @@ CONVERSION_LOOP:
     ; While input_a is not zero jump back
     cmp ax, 00h
     jne CONVERSION_LOOP 
+    
+    lea dx, div_output_a_msg
+    mov ah, 09h
+    int 21h
+    int 21h
         
     ; Open file
     lea dx, conv_table_file
@@ -570,6 +612,11 @@ CONVERSION_SECOND_LOOP:
     ; close file
     mov bx, ax
     mov ah, 03eh
+    int 21h
+    
+    lea dx, line_break_msg
+    mov ah, 09h
+    int 21h
     int 21h
     
     popa
@@ -1439,6 +1486,8 @@ Rotate_Left_Array endp
 
 _begin:
     call Init_Segments
+    
+    call Clear_Screen
     
     lea dx, intro_msg
     mov ah, 09h
