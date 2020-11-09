@@ -2,26 +2,29 @@
 
 .stack 100h
 
-.data 
-    conv_input_1_msg    db  "Introduza base inicial $"
-    conv_input_2_msg    db  "Introduza base final   $"
-    intro_opt_msg       db  "Op", 087h, "ao         $"
+.data
+    ; Division variables
     div_input_a_msg     db  "Dividendo              $"
     div_input_b_msg     db  "Divisor                $"
-    sqrt_input_msg      db  "N", 0a3h, "mero        $"
-    
-    intro_msg           db  "Escolha um algoritmo:", 0ah, 0dh, "0 -> Divisao (valor por defeito)", 0ah, 0dh, "1 -> Raiz quadrada", 0ah, 0dh, "2 -> Conversao", 0ah, 0dh, "3 -> Sair", 0ah, 0dh, "$"
-    conv_intro          db  "0 -> Base 16 (valor por defeito)", 0ah, 0dh, "1 -> Base 10", 0ah, 0dh, "2 -> Base 8", 0ah, 0dh, "3 -> Base 2", 0ah, 0dh, "$"
-      
-    div_output_a_msg    db  "Resultado ", 082h," $"
     div_output_b_msg    db  " e resto ", 082h, " $"
     
+    ; SQRT variables
+    sqrt_input_msg      db  "N", 0a3h, "mero        $"
+    
+    ; Conversion variables
+    conv_input_1_msg    db  "Introduza base inicial $"
+    conv_input_2_msg    db  "Introduza base final   $"
+    conv_intro          db  "0 -> Base 16 (valor por defeito)", 0ah, 0dh, "1 -> Base 10", 0ah, 0dh, "2 -> Base 8", 0ah, 0dh, "3 -> Base 2", 0ah, 0dh, "$"
     conv_input_3_msg    db  "Introduza o n", 0a3h, "mero     $"
     conv_bases          db  10h, 0ah, 08h, 02h
     conv_src_base       db  00h
     conv_dst_base       db  00h
     conv_table_file     db  "table.txt", 0
-                      
+    
+    ; Intro variables
+    intro_msg           db  "Escolha um algoritmo:", 0ah, 0dh, "0 -> Divisao (valor por defeito)", 0ah, 0dh, "1 -> Raiz quadrada", 0ah, 0dh, "2 -> Conversao", 0ah, 0dh, "3 -> Sair", 0ah, 0dh, "$"
+    intro_opt_msg       db  "Op", 087h, "ao         $"
+                        
     ; General variables
     input_a             db  12 dup(00h), 00h
     input_a_str         db  12 dup(00h), 00h
@@ -32,6 +35,8 @@
     aux_var_a           db  12 dup(00h)
     aux_var_b           db  12 dup(00h)
     aux_var_c           db  12 dup(00h)
+    
+    div_output_a_msg    db  "Resultado ", 082h," $"
         
     ; Line break message
     line_break_msg      db  0ah, 0dh, "$"
