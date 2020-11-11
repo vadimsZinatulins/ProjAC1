@@ -51,6 +51,10 @@
     clear_line          db 80 dup(' '), "$"
 .code
 
+; Input:
+; Output:
+; Description:
+;   Initializes DS and ES (i.e. makes them reference .data segment)
 Init_Segments proc
     pusha
     
@@ -62,6 +66,10 @@ Init_Segments proc
     ret
 Init_Segments endp
 
+; Input:
+; Output:
+; Description: 
+;   Clears the entire screen (if it is 80x25 characters)
 Clear_Screen proc
     pusha
     
@@ -86,6 +94,10 @@ CLEAR_SCREEN_LOOP:
     ret
 Clear_Screen endp
 
+; Input:
+; Output:
+; Description: 
+;   Askes user to press any key to continue
 Input_To_Continue proc
     pusha
     
@@ -99,6 +111,7 @@ Input_To_Continue proc
     popa
     ret
 Input_To_Continue endp
+
 ; Input:
 ;   None
 ; Output:
@@ -148,22 +161,27 @@ Division proc
     
     ; Loop through all digits in dividend
 DIVISION_LOOP:
+    ; remainder = remainder x 10
     lea di, aux_var_b
     call Mul_By_10
     
+    ; index = chars.size - CX
     mov bh, 00h
     mov bl, input_a_str[0ch]
     sub bx, cx
+    
+    ; remainder = remainder + chars[index]
     mov ah, 00h
     mov al, input_a_str[bx]
     lea di, aux_var_b
     call Add_Word_To_Array
- 
+    
+    ; Store CX in the stack
     push cx
     mov cx, 0ah
-    
+    ; for(CX = 10; CX > 0; CX--)
 DIVISION_INNER_LOOP:
-    ; Copy divisor to a temporary variable
+    ; temp = divisor
     mov ax, word ptr input_b[00h]
     mov word ptr aux_var_c[00h], ax
     mov ax, word ptr input_b[02h]
@@ -177,56 +195,72 @@ DIVISION_INNER_LOOP:
     mov ax, word ptr input_b[0ah]
     mov word ptr aux_var_c[0ah], ax
     
-    lea di, aux_var_c
+    ; AX = CX - 1
     mov ax, cx
     dec ax
+    ; temp = temp x AX
+    lea di, aux_var_c
     call Mul_By_Byte
-       
+    
+    ; Compare temp with remainder   
     lea di, aux_var_c
     lea si, aux_var_b
     call Cmp_array
     
+    ; if (temp <= remainder) jump to DIVISION_INNER_LOOP_EXIT
     cmp al, 01h
     jbe DIVISION_INNER_LOOP_EXIT
     loop DIVISION_INNER_LOOP
      
 DIVISION_INNER_LOOP_EXIT:
+    ; remainder = remainder - temp
     lea di, aux_var_b
     lea si, aux_var_c
     call Sub_Array
     
+    ; result = result x 10
     lea di, aux_var_a
     call Mul_By_10
     
+    ; AX = CX - 1
     mov ax, cx
     dec ax
+    
+    ; result = result + AX
     lea di, aux_var_a
     call Add_Word_To_array
-        
+    
+    ; Restore CX from the stack    
     pop cx
     
 DIVISION_CONTINUE_LOOP:    
     loop DIVISION_LOOP
     
+    ; Print custom message
     lea dx, div_output_a_msg
     mov ah, 09h
     int 021h
     
+    ; Print the result
     lea si, aux_var_a
     call Output_Array
     
+    ; Print custom message
     lea dx, div_output_b_msg
     mov ah, 09h
     int 021h
     
+    ; Print the remainder
     lea si, aux_var_b
     call Output_Array
     
+    ; Print the line break
     lea dx, line_break_msg
     mov ah, 09h
     int 21h
     int 21h
     
+    ; Wait for user input
     call Input_To_Continue
         
     popa
@@ -263,15 +297,18 @@ Sqrt proc
     mov dh, 0ah
     call Pretty_Input
     
+    ; Check if the number of chars is even
+    ; AH = chars.size % 2
     mov ah, 00h
     mov al, input_a_str[0ch]
     mov bl, 02h
     div bl
     
+    ; if (AH == 0) jump to SQRT_OK
     cmp ah, 00h
     je SQRT_OK
     
-    ; Shift entire array to the left and place 00h as first digit
+    ; Shift entire array (by one byte) to the left and place 00h as first digit
     mov bx, word ptr input_a_str[09h]
     mov word ptr input_a_str[0ah], bx
     mov bx, word ptr input_a_str[07h]
@@ -287,46 +324,64 @@ Sqrt proc
     mov bl, 00h
     mov word ptr input_a_str[00h], bx     
     
+    ; chars.size += 1
     inc input_a_str[0ch]
     
-SQRT_OK: 
+SQRT_OK:
+    ; AH = chars.size % 2 
     mov ah, 00h
     mov al, input_a_str[0ch]
     mov bl, 02h
-    div bl 
+    div bl
+    ; Store the AL in the stack (must use entire register) 
+    ; AL stores the number of pairs
     push ax
+    
+    ; CX = 00:AL
     mov ch, 00h
     mov cl, al
     
+    ; for(CX = number of pairs; CX > 0; CX--)
 SQRT_LOOP:
     mov bp, sp
     
+    ; remainder = remainder x 100
     mov al, 064h
     lea di, aux_var_b
     call Mul_By_Byte
     
+    ; Calculate the index of the next pair and keep it in BX
+    ; Restore the AL from the stack
     mov ax, [bp + 00h]
+    ; BX = 00:AL
     mov bh, 00h
     mov bl, al
+    ; BL = 2 x (BL - CL)
     sub bl, cl
     shl bl, 01h
     
+    ; Add the next pair to the remainder
+    ; AX = 00:chars[index]
     mov ah, 00h
     mov al, input_a_str[bx + 00h]
+    ; AX = AX x 10
     mov dl, 0ah
     mul dl
     mov dh, 00h
+    ; AX = AX + chars[index + 1] 
     mov dl, input_a_str[bx + 01h]
     add ax, dx
     
+    ; remainder = remainder + ax
     lea di, aux_var_b
     call Add_Word_To_Array
     
+    ; Store CX in the stack
     push cx
     
     mov cl, 0ah
     
-    ; while (cl >= 1)
+    ; for(CL = 10; CL > 0; CL--)
 SQRT_INNER_LOOP:
     dec cl
     ; temp = result        
@@ -398,11 +453,12 @@ SQRT_INNER_LOOP_EXIT:
     mov ax, word ptr aux_var_a[0ah]
     mov word ptr input_b[0ah], ax
     
+    ; Print custom message
     lea dx, div_output_a_msg
     mov ah, 09h
     int 021h
     
-    ; print input_b
+    ; Print the result
     lea si, input_b
     call Output_Array
     
@@ -493,17 +549,21 @@ SQRT_DECIMAL_INNER_LOOP_EXIT:
     pop cx
     loop SQRT_DECIMAL_LOOP
     
+    ; Get the decimal value
     lea di, aux_var_a
     lea si, input_b
     call Sub_Array
     
+    ; Print '.'
     mov dl, 02eh
     mov ah, 02h
     int 21h
     
+    ; Print decimal value
     lea si, aux_var_a
     call Output_Array
     
+    ; Print line break
     lea dx, line_break_msg
     mov ah, 09h
     int 21h
@@ -658,7 +718,9 @@ Output_Array proc
     pusha
     
     mov cx, 00h
-                               
+    
+    ; If [SI] == 0 then just print '0'
+    ; AX = AX OR [SI]                           
     mov ax, word ptr [SI + 00h]
     or ax, word ptr [SI + 02h]
     or ax, word ptr [SI + 04h]
@@ -666,25 +728,31 @@ Output_Array proc
     or ax, word ptr [SI + 08h]
     or ax, word ptr [SI + 0ah]
     
+    ; if (AX != 0) jump to OUTPUT_ARRAY_LOOP
     cmp ax, 00h
     jne OUTPUT_ARRAY_LOOP
-    
+ 
+    ; Print '0'   
     mov dl, 030h
     mov ah, 02h
     int 21h
+    ; Jump to the end
     jmp OUTPUT_ARRAY_END
     
 OUTPUT_ARRAY_LOOP:
     inc cx
     
+    ; [SI] = [SI] / 10
     mov di, si
     mov ax, 0ah
     call Div_By_Byte
     
     add ah, 030h
     
+    ; Push the value into the stack
     push ax
-
+    
+    ; Check if there are more values to print
     mov ax, 00h
     or ax, [SI + 00h]
     or ax, [SI + 02h]
