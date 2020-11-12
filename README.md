@@ -1,5 +1,9 @@
 # Description
-Develpment of a division, square root and conversion algorithms. The project was not designed with performance in mind, the purpuse here is to devolpemt skill that allows to create algorithms with certains restrictions (these are in form of specification and hardware) and learn the fundamendals of 8086 assembly. 
+The purpose of this project is to create an assembly program that performs division, square root and conversion. It was not designed with performance in mind but to develop skill that would allow to think and overcome some problems with certain restrictions (these may come in form of specification and hardware). In this case, the Division algorithm had to be implemented as it would be done by hand. Same applies to the Square Root algorithm. The conversion algorithm should use a table from the specific file.
+
+The other purpose of this project was to learn some fundamentals about 8086 assembly and its restrictions.
+
+Vadims Zinatulins, aluno nr. 9639.
 
 # List of procedures
 - [Init_Segments](https://github.com/vadimsZinatulins/ProjAC1#init_segments-procedure)
