@@ -1,0 +1,55 @@
+y = z / t
+
+z = s! + sqrt( (a + b) / c )
+
+i = 0 ... N		// N pertence ao intervalo [0, 120]
+	t = sum(A[i])
+
+s, a, b, z, t, y são variáveis de 16bits
+A é um array de 8 bits cada elemento
+
+1 - Abrir o ficheiro "file.txt"
+
+// Ainda não se tem em conta as perdas
+2 - Calcular: z
+	2.1 Calcular s!
+		2.1.1 Inicializar aux a 1
+		2.1.2 Se s <= 1 então saltar para o passo 1.1.6
+		2.1.3 aux = aux * s
+		2.1.4 Decrementar s
+		2.1.5 Voltar ao passo 1.1.2
+		2.1.6 temp1 = aux
+		2.1.7 Escrever no ficheiro "s! = " e o valor de temp1
+		2.1.8 Escrever no ficheiro LINE FEED e CARRIAGE RETURN
+	2.2 temp2 = a + b
+	2.3 Escrever no ficheiro "a + b = " e o valor de temp2
+	2.4 Escrever no ficheiro LINE FEED e CARRIAGE RETURN
+	2.5 temp2 = temp2 / c		
+	2.6 Escrever no ficheiro "(a + b) / c = " e o valor de temp2
+	2.7 Escrever no ficheiro LINE FEED e CARRIAGE RETURN
+	2.8 temp2 = sqrt(temp2)
+	2.9 Escrever no ficheiro "sqrt((a + b) / c) = " e o valor de temp2
+	2.10 Escrever no ficheiro LINE FEED e CARRIAGE RETURN
+	2.11 z = temp1 + temp2
+	2.12 Escrever no ficheiro "z = " e o valor de z
+	2.13 Escrever no ficheiro LINE FEED e CARRIAGE RETURN
+
+// Ainda não se tem em conta as perdas
+3 - Calcular: t
+	3.1 Inicializar i a 0
+	3.2 Inicializar aux a 0
+	3.3 Se i <= N então saltar para o passo 2.7
+	3.4 aux = aux + A[i]			// Não existem perdas aqui (120 * 255 = 07788h que é < 0FFFFh)
+	3.5 Incrementar i
+	3.6 Voltar ao passo 2.3
+	3.7 t = aux
+	3.8 Escrever no ficheiro "t = " e o valor de t
+	3.9 Escrever no ficheiro LINE FEED e CARRIAGE RETURN
+
+// Ainda não se tem em conta as perdas
+4 - Calcular: z / t
+	3.1 y = z / t
+	3.2 Escrever no ficheiro "y = " e o valor de y
+	3.3 Escrever no ficheiro LINE FEED e CARRIAGE RETURN
+
+5 - Fechar o ficheiro

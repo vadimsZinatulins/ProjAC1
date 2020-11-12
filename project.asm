@@ -117,7 +117,7 @@ Input_To_Continue endp
 ; Output:
 ;   None
 ; Description:
-;   Performs division algorith as it would be done by hand.
+;   Performs division algorithm as it would be done by hand.
 Division proc
     pusha
     
@@ -266,8 +266,14 @@ DIVISION_CONTINUE_LOOP:
     popa
     
     ret
-Division endp    
-
+Division endp 
+   
+; Input:
+;   None
+; Output:
+;   None
+; Description:
+;   Performs square root algorithm as it would be done by hand.
 Sqrt proc
     pusha
     
@@ -576,6 +582,12 @@ SQRT_DECIMAL_INNER_LOOP_EXIT:
     ret
 Sqrt endp
 
+; Input:
+;   None
+; Output:
+;   None
+; Description:
+;   Performs conversion algorith.
 Conversion proc
     pusha
     
@@ -714,6 +726,7 @@ Conversion endp
 ;   SI -> Array to print
 ; Output:
 ; Description:
+;   Prints the array in base 10
 Output_Array proc
     pusha
     
@@ -823,6 +836,9 @@ Input_Limit_Cursor endp
 ;   DL -> Base
 ; Output:
 ; Description:
+;   Inputs and validates values (i.e. check if they are in the right base) from user.
+;   Each element of DI stores  the individual digit.
+;   SI array stores the entire value as a single number
 Input_Value proc
     pusha
          
@@ -998,7 +1014,8 @@ Input_Value endp
 ;   DH -> Max. number of digits
 ;   DL -> Base
 ; Output:
-; Description: 
+; Description:
+;   Draws a box around the user input. 
 Pretty_Input proc
     pusha
     
