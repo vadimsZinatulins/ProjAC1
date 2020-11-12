@@ -1,3 +1,6 @@
+# Description
+Develpment of a division, square root and conversion algorithms. The project was not designed with performance in mind, the purpuse here is to devolpemt skill that allows to create algorithms with certains restrictions (these are in form of specification and hardware) and learn the fundamendals of 8086 assembly. 
+
 # List of procedures
 - [Init_Segments](https://github.com/vadimsZinatulins/ProjAC1#init_segments-procedure)
 - [Division](https://github.com/vadimsZinatulins/ProjAC1#division-procedure)
@@ -59,11 +62,12 @@ SI -> Array to print
 #### Outputs
 None
 #### Description
-None
+Prints the array in base 10
 
 ## Input_Limit_Cursor procedure
 #### Inputs
 [Stack + 00h] -> Cursor limit coordinates
+
 [Stack + 02h] -> Cursor restore page
 #### Outputs
 #### Description
@@ -72,25 +76,35 @@ Compares the current cursor column with the column stored in [Stack + 00h], if t
 ## Input_Value procedure
 #### Inputs
 DI -> Destination string
+
 SI -> Destination array
+
 DH -> Max. number of digits
+
 DL -> Base
 #### Outputs
 #### Description
+Inputs and validates values (i.e. check if they are in the right base) from user. Each element of DI stores  the individual digit. SI array stores the entire value as a single number
 
 ## Pretty_Input procedure
 #### Inputs
 DI -> Destination string
+
 SI -> Destination array
+
 BX -> Propt to display
+
 DH -> Max. number of digits
+
 DL -> Base
 #### Outputs
 #### Description
+Draws a box around the user input.
 
 ## Add_Array procedure
 #### Inputs
 DI -> Address of the destination array of words
+
 SI -> Address of the source array of words
 #### Outputs
 #### Description
@@ -99,6 +113,7 @@ SI -> Address of the source array of words
 ## Add_Word_To_Array procedure
 #### Inputs
 DI -> Address of the destination array of words
+
 AX -> Word to add
 #### Outputs
 #### Description
@@ -107,6 +122,7 @@ AX -> Word to add
 ## Sub_Word_To_Array procedure
 #### Inputs
 DI -> Address of the destination array of words
+
 AL -> Word to add
 #### Outputs
 #### Description
@@ -115,6 +131,7 @@ AL -> Word to add
 ## Sub_Array procedure
 #### Inputs
 DI -> Address of the destination array of words
+
 SI -> Address of the source array of words
 #### Outputs
 #### Description
@@ -130,6 +147,7 @@ Performs shift multiplication. The result is [DI] = [DI] x 10. Using the followi
 ## Mul_By_Byte procedure
 #### Inputs
 DI -> Address of the destination array of words
+
 AL -> Multiply value
 #### Outputs
 #### Description
@@ -138,6 +156,7 @@ AL -> Multiply value
 ## Div_By_Byte procedure
 #### Inputs
 DI -> Address of the destination array of words
+
 AL -> Divide value
 #### Outputs
 AH -> Remainder
@@ -148,6 +167,7 @@ AH -> Remainder
 ## Cmp_Array procedure
 #### Inputs
 DI -> Operand A
+
 SI -> Operand B
 #### Outputs
 AL -> Result
@@ -159,6 +179,7 @@ DI < SI => AL = 0
 ## Get_Bit_At procedure
 #### Inputs
 SI -> Address of the siyrce array
+
 AX -> Bit index [0 - 95]
 #### Outputs
 CF -> Indicates the value of the bit at AX index
@@ -167,6 +188,7 @@ Retrieves the value of the bit in the SI array at AX index
 
 ## Set_Bit_At procedure
 DI -> Address of the siyrce array
+
 AX -> Bit index [0 - 95]
 #### Inputs
 #### Outputs
@@ -176,6 +198,7 @@ Sets the bit at index specified by AX in the SI array
 ## Rotate_Right_Array procedure
 #### Inputs
 DI -> Address of the destination array of words
+
 AL -> Rotation ammount
 #### Outputs
 #### Description
@@ -184,6 +207,7 @@ Rotates [DI] to the right
 ## Rotate_Left_Array procedure
 #### Inputs
 DI -> Address of the destination array of words
+
 AL -> Rotation ammount
 #### Outputs
 #### Description
